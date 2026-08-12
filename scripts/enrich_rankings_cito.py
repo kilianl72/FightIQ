@@ -9,6 +9,15 @@ from supabase import create_client
 
 API_URL = "https://api.citoapi.com/api/v1/ufc/rankings"
 
+NAME_ALIASES = {
+    "michael venom page": "michael page",
+    "jose miguel delgado": "jose delgado",
+}
+
+FORCED_UFCSTATS_IDS = {
+    "jean silva": "52ef95b5860fb28c",
+}
+
 
 def normalize_name(value):
     if not value:
@@ -67,7 +76,7 @@ def fetch_all_fighters(supabase):
             .table("fighters")
             .select(
                 "id,display_name,first_name,"
-                "last_name,slug"
+                "last_name,slug,ufcstats_id"
             )
             .range(
                 start,
@@ -119,6 +128,14 @@ def build_name_index(fighters):
     return index
 
 
+def build_ufcstats_index(fighters):
+    return {
+        fighter["ufcstats_id"]: fighter
+        for fighter in fighters
+        if fighter.get("ufcstats_id")
+    }
+
+
 def is_p4p_division(item):
     division = normalize_name(
         item.get("division")
@@ -153,6 +170,50 @@ def parse_rank(item):
         return int(rank)
 
     return None
+
+
+def resolve_fighter(
+    fighter_name,
+    name_index,
+    ufcstats_index,
+):
+    normalized = normalize_name(
+        fighter_name
+    )
+
+    forced_id = FORCED_UFCSTATS_IDS.get(
+        normalized
+    )
+
+    if forced_id:
+        fighter = ufcstats_index.get(
+            forced_id
+        )
+
+        if fighter:
+            return fighter, "forced"
+
+    alias = NAME_ALIASES.get(
+        normalized
+    )
+
+    if alias:
+        normalized = normalize_name(
+            alias
+        )
+
+    matches = name_index.get(
+        normalized,
+        []
+    )
+
+    if len(matches) == 1:
+        return matches[0], "name"
+
+    if len(matches) == 0:
+        return None, "unmatched"
+
+    return None, "ambiguous"
 
 
 def main():
@@ -193,6 +254,10 @@ def main():
         fighters
     )
 
+    ufcstats_index = build_ufcstats_index(
+        fighters
+    )
+
     print(
         f"Cito rows: {len(rankings)}"
     )
@@ -202,8 +267,6 @@ def main():
         f"{len(fighters)}"
     )
 
-    # On remet à zéro les classements
-    # pour éviter de garder un ancien rang.
     (
         supabase
         .table("fighters")
@@ -220,6 +283,7 @@ def main():
     updates = {}
     unmatched = []
     ambiguous = []
+    forced_matches = []
 
     now = datetime.now(
         timezone.utc
@@ -230,28 +294,27 @@ def main():
             "fighterName"
         )
 
-        key = normalize_name(
-            fighter_name
+        fighter, match_type = resolve_fighter(
+            fighter_name,
+            name_index,
+            ufcstats_index,
         )
 
-        matches = name_index.get(
-            key,
-            []
-        )
-
-        if len(matches) == 0:
-            unmatched.append(
-                fighter_name
-            )
+        if not fighter:
+            if match_type == "unmatched":
+                unmatched.append(
+                    fighter_name
+                )
+            else:
+                ambiguous.append(
+                    fighter_name
+                )
             continue
 
-        if len(matches) > 1:
-            ambiguous.append(
+        if match_type == "forced":
+            forced_matches.append(
                 fighter_name
             )
-            continue
-
-        fighter = matches[0]
 
         fighter_id = fighter["id"]
 
@@ -276,7 +339,6 @@ def main():
             "rankText"
         )
 
-        # P4P
         if is_p4p_division(item):
             if rank is not None:
                 current = update.get(
@@ -293,7 +355,6 @@ def main():
 
             continue
 
-        # Division normale
         division = (
             item.get("division")
             or item.get(
@@ -311,7 +372,6 @@ def main():
                 "ufc_rank"
             ] = rank
 
-        # Champion ou champion intérimaire
         if (
             is_champion
             or (
@@ -379,6 +439,17 @@ def main():
         "FightIQ ranking enrichment "
         f"complete: {updated} fighters"
     )
+
+    print(
+        f"Forced matches: "
+        f"{len(forced_matches)}"
+    )
+
+    if forced_matches:
+        print(
+            "Forced match names:",
+            forced_matches
+        )
 
     print(
         f"Unmatched: {len(unmatched)}"
