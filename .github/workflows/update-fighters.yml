@@ -33,3 +33,9 @@ jobs:
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           CITO_API_KEY: ${{ secrets.CITO_API_KEY }}
         run: python scripts/enrich_rankings_cito.py
+
+      - name: Enrich fighters with Wikidata
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: python scripts/enrich_wikidata.py
