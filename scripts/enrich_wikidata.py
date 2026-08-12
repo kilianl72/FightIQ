@@ -2,245 +2,282 @@ import json
 import os
 import time
 from datetime import datetime, timezone
+from urllib.error import HTTPError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from supabase import create_client
 
-USER_AGENT = "FightIQ/1.0 (contact: FightIQ project)"
+
 WIKIDATA_API = "https://www.wikidata.org/w/api.php"
 
+USER_AGENT = (
+    "FightIQ/1.0 "
+    "(MMA fighter database enrichment)"
+)
+
 BATCH_LIMIT = 100
-SLEEP_BETWEEN_CALLS = 0.25
+
+# Une recherche par combattant, espacée volontairement
+SEARCH_DELAY = 1.0
+
+# Nombre d'essais si Wikidata renvoie 429
+MAX_RETRIES = 5
 
 
 def api_get(params):
-    url = f"{WIKIDATA_API}?{urlencode(params)}"
+    params["format"] = "json"
+    params["maxlag"] = "5"
 
-    request = Request(
-        url,
-        headers={
-            "User-Agent": USER_AGENT,
-            "Accept": "application/json",
-        },
+    url = (
+        WIKIDATA_API
+        + "?"
+        + urlencode(params)
     )
 
-    with urlopen(request, timeout=30) as response:
-        return json.loads(
-            response.read().decode("utf-8")
+    for attempt in range(MAX_RETRIES):
+        request = Request(
+            url,
+            headers={
+                "User-Agent": USER_AGENT,
+                "Accept": "application/json",
+            },
         )
 
+        try:
+            with urlopen(
+                request,
+                timeout=30
+            ) as response:
+                return json.loads(
+                    response
+                    .read()
+                    .decode("utf-8")
+                )
 
-def search_wikidata_entity(name):
+        except HTTPError as exc:
+            if exc.code != 429:
+                raise
+
+            wait = 2 ** attempt
+
+            print(
+                f"Wikidata 429 - "
+                f"retry in {wait}s"
+            )
+
+            time.sleep(wait)
+
+    raise RuntimeError(
+        "Wikidata rate limit "
+        "after retries"
+    )
+
+
+def search_fighter(name):
     payload = api_get({
         "action": "wbsearchentities",
         "search": name,
         "language": "en",
-        "format": "json",
+        "uselang": "en",
         "limit": 5,
         "type": "item",
     })
 
-    results = payload.get("search", [])
+    results = payload.get(
+        "search",
+        []
+    )
 
-    if not results:
-        return None
-
-    # On privilégie les résultats liés au MMA/UFC/combat
-    keywords = [
+    mma_keywords = (
         "mixed martial",
         "mma",
         "ufc",
-        "fighter",
         "martial artist",
-    ]
+        "mixed martial artist",
+    )
 
     for result in results:
         description = (
-            result.get("description") or ""
+            result.get(
+                "description"
+            )
+            or ""
         ).lower()
 
         if any(
-            keyword in description
-            for keyword in keywords
+            word in description
+            for word in mma_keywords
         ):
             return result.get("id")
 
-    # Sinon on prend le premier résultat
-    return results[0].get("id")
+    # Sécurité :
+    # on ne prend PAS le premier
+    # homonyme au hasard.
+    return None
 
 
-def get_entity(qid):
+def fetch_entities(qids):
+    if not qids:
+        return {}
+
     payload = api_get({
         "action": "wbgetentities",
-        "ids": qid,
-        "format": "json",
-        "props": "claims|sitelinks|info",
+        "ids": "|".join(qids),
+        "props": "claims|labels",
+        "languages": "fr|en",
+        "languagefallback": "1",
     })
 
-    return (
-        payload
-        .get("entities", {})
-        .get(qid)
+    return payload.get(
+        "entities",
+        {}
     )
 
 
-def get_claim_entity_id(entity, property_id):
-    claims = entity.get("claims", {})
-    values = claims.get(property_id, [])
+def first_entity_claim(
+    entity,
+    property_id
+):
+    claims = (
+        entity
+        .get("claims", {})
+        .get(property_id, [])
+    )
 
-    if not values:
-        return None
+    for claim in claims:
+        try:
+            value = (
+                claim["mainsnak"]
+                ["datavalue"]
+                ["value"]
+            )
 
-    try:
-        return (
-            values[0]
-            ["mainsnak"]
-            ["datavalue"]
-            ["value"]
-            ["id"]
-        )
-    except (
-        KeyError,
-        TypeError,
-        IndexError,
-    ):
-        return None
+            if (
+                isinstance(value, dict)
+                and value.get("id")
+            ):
+                return value["id"]
 
-
-def get_claim_string(entity, property_id):
-    claims = entity.get("claims", {})
-    values = claims.get(property_id, [])
-
-    if not values:
-        return None
-
-    try:
-        value = (
-            values[0]
-            ["mainsnak"]
-            ["datavalue"]
-            ["value"]
-        )
-
-        if isinstance(value, str):
-            return value
-
-    except (
-        KeyError,
-        TypeError,
-        IndexError,
-    ):
-        pass
+        except (
+            KeyError,
+            TypeError
+        ):
+            continue
 
     return None
 
 
-def get_entity_label(qid):
-    if not qid:
-        return None
-
-    payload = api_get({
-        "action": "wbgetentities",
-        "ids": qid,
-        "format": "json",
-        "props": "labels",
-        "languages": "en|fr",
-    })
-
-    entity = (
-        payload
-        .get("entities", {})
-        .get(qid, {})
+def first_string_claim(
+    entity,
+    property_id
+):
+    claims = (
+        entity
+        .get("claims", {})
+        .get(property_id, [])
     )
 
-    labels = entity.get("labels", {})
+    for claim in claims:
+        try:
+            value = (
+                claim["mainsnak"]
+                ["datavalue"]
+                ["value"]
+            )
+
+            if isinstance(
+                value,
+                str
+            ):
+                return value
+
+        except (
+            KeyError,
+            TypeError
+        ):
+            continue
+
+    return None
+
+
+def get_label(entity):
+    if not entity:
+        return None
+
+    labels = entity.get(
+        "labels",
+        {}
+    )
 
     if "fr" in labels:
-        return labels["fr"]["value"]
+        return labels[
+            "fr"
+        ].get("value")
 
     if "en" in labels:
-        return labels["en"]["value"]
+        return labels[
+            "en"
+        ].get("value")
 
     return None
 
 
-def country_code_from_qid(qid):
-    if not qid:
-        return None
-
-    payload = api_get({
-        "action": "wbgetentities",
-        "ids": qid,
-        "format": "json",
-        "props": "claims",
-    })
-
-    entity = (
-        payload
-        .get("entities", {})
-        .get(qid, {})
-    )
-
-    claims = entity.get("claims", {})
-    iso_claims = claims.get("P297", [])
-
-    if not iso_claims:
-        return None
-
-    try:
-        return (
-            iso_claims[0]
-            ["mainsnak"]
-            ["datavalue"]
-            ["value"]
-        )
-    except (
-        KeyError,
-        TypeError,
-        IndexError,
-    ):
-        return None
-
-
-def gender_from_qid(qid):
-    if not qid:
-        return None
-
-    label = get_entity_label(qid)
-
+def normalize_gender(label):
     if not label:
         return None
 
     value = label.lower()
 
-    if value in {
+    if value in (
         "male",
         "masculin",
         "homme",
-    }:
+    ):
         return "male"
 
-    if value in {
+    if value in (
         "female",
         "féminin",
         "femme",
-    }:
+    ):
         return "female"
 
     return label
 
 
-def fetch_fighters_to_enrich(supabase):
+def iso_country_code(
+    country_entity
+):
+    if not country_entity:
+        return None
+
+    return first_string_claim(
+        country_entity,
+        "P297"
+    )
+
+
+def fetch_fighters(
+    supabase
+):
     response = (
         supabase
         .table("fighters")
         .select(
-            "id,display_name,wikidata_id,"
-            "nationality,country_code,"
-            "gender,birth_place,website"
+            "id,"
+            "display_name,"
+            "wikidata_id,"
+            "nationality,"
+            "country_code,"
+            "gender,"
+            "birth_place,"
+            "website"
         )
-        .is_("wikidata_id", "null")
+        .is_(
+            "wikidata_id",
+            "null"
+        )
         .limit(BATCH_LIMIT)
         .execute()
     )
@@ -257,7 +294,10 @@ def main():
         "SUPABASE_SECRET_KEY"
     )
 
-    if not supabase_url or not supabase_key:
+    if (
+        not supabase_url
+        or not supabase_key
+    ):
         raise RuntimeError(
             "Missing Supabase secrets"
         )
@@ -267,26 +307,26 @@ def main():
         supabase_key
     )
 
-    fighters = fetch_fighters_to_enrich(
+    fighters = fetch_fighters(
         supabase
     )
 
     print(
-        f"FightIQ Wikidata batch: "
+        "FightIQ Wikidata batch: "
         f"{len(fighters)} fighters"
     )
 
-    processed = 0
-    matched = 0
+    matches = {}
     not_found = []
 
-    now = datetime.now(
-        timezone.utc
-    ).isoformat()
+    # ------------------------------------------------
+    # 1. Recherche des QID
+    # ------------------------------------------------
 
-    for fighter in fighters:
-        processed += 1
-
+    for index, fighter in enumerate(
+        fighters,
+        start=1
+    ):
         name = fighter.get(
             "display_name"
         )
@@ -295,168 +335,273 @@ def main():
             continue
 
         try:
-            qid = search_wikidata_entity(
+            qid = search_fighter(
                 name
             )
 
-            if not qid:
-                not_found.append(name)
+            if qid:
+                matches[
+                    fighter["id"]
+                ] = {
+                    "fighter": fighter,
+                    "qid": qid,
+                }
+
                 print(
-                    f"[{processed}] NOT FOUND: "
+                    f"[{index}] FOUND: "
+                    f"{name} -> {qid}"
+                )
+
+            else:
+                not_found.append(name)
+
+                print(
+                    f"[{index}] NOT FOUND: "
                     f"{name}"
                 )
-                time.sleep(
-                    SLEEP_BETWEEN_CALLS
-                )
-                continue
-
-            entity = get_entity(qid)
-
-            if not entity:
-                not_found.append(name)
-                continue
-
-            nationality_qid = (
-                get_claim_entity_id(
-                    entity,
-                    "P27"
-                )
-            )
-
-            birth_place_qid = (
-                get_claim_entity_id(
-                    entity,
-                    "P19"
-                )
-            )
-
-            gender_qid = (
-                get_claim_entity_id(
-                    entity,
-                    "P21"
-                )
-            )
-
-            nationality = (
-                get_entity_label(
-                    nationality_qid
-                )
-                if nationality_qid
-                else None
-            )
-
-            country_code = (
-                country_code_from_qid(
-                    nationality_qid
-                )
-                if nationality_qid
-                else None
-            )
-
-            birth_place = (
-                get_entity_label(
-                    birth_place_qid
-                )
-                if birth_place_qid
-                else None
-            )
-
-            gender = (
-                gender_from_qid(
-                    gender_qid
-                )
-                if gender_qid
-                else None
-            )
-
-            website = get_claim_string(
-                entity,
-                "P856"
-            )
-
-            update = {
-                "wikidata_id": qid,
-                "wikidata_updated_at": now,
-                "fightiq_updated_at": now,
-            }
-
-            if (
-                nationality
-                and not fighter.get(
-                    "nationality"
-                )
-            ):
-                update[
-                    "nationality"
-                ] = nationality
-
-            if (
-                country_code
-                and not fighter.get(
-                    "country_code"
-                )
-            ):
-                update[
-                    "country_code"
-                ] = country_code
-
-            if (
-                birth_place
-                and not fighter.get(
-                    "birth_place"
-                )
-            ):
-                update[
-                    "birth_place"
-                ] = birth_place
-
-            if (
-                gender
-                and not fighter.get(
-                    "gender"
-                )
-            ):
-                update[
-                    "gender"
-                ] = gender
-
-            if (
-                website
-                and not fighter.get(
-                    "website"
-                )
-            ):
-                update[
-                    "website"
-                ] = website
-
-            (
-                supabase
-                .table("fighters")
-                .update(update)
-                .eq(
-                    "id",
-                    fighter["id"]
-                )
-                .execute()
-            )
-
-            matched += 1
-
-            print(
-                f"[{processed}] MATCH: "
-                f"{name} -> {qid}"
-            )
 
         except Exception as exc:
             print(
-                f"[{processed}] ERROR: "
+                f"[{index}] ERROR: "
                 f"{name}: {exc}"
             )
 
         time.sleep(
-            SLEEP_BETWEEN_CALLS
+            SEARCH_DELAY
         )
+
+    # ------------------------------------------------
+    # 2. Récupération groupée des fiches fighters
+    # ------------------------------------------------
+
+    fighter_qids = [
+        item["qid"]
+        for item in matches.values()
+    ]
+
+    fighter_entities = {}
+
+    for i in range(
+        0,
+        len(fighter_qids),
+        50
+    ):
+        group = fighter_qids[
+            i:i + 50
+        ]
+
+        fighter_entities.update(
+            fetch_entities(group)
+        )
+
+        time.sleep(1)
+
+    # ------------------------------------------------
+    # 3. Collecte des QID liés
+    # ------------------------------------------------
+
+    linked_qids = set()
+
+    for item in matches.values():
+        entity = (
+            fighter_entities
+            .get(item["qid"], {})
+        )
+
+        for property_id in (
+            "P27",  # citizenship
+            "P19",  # birthplace
+            "P21",  # gender
+        ):
+            linked = first_entity_claim(
+                entity,
+                property_id
+            )
+
+            if linked:
+                linked_qids.add(linked)
+
+    # ------------------------------------------------
+    # 4. Récupération groupée pays / lieux / sexe
+    # ------------------------------------------------
+
+    linked_entities = {}
+
+    linked_qids = list(
+        linked_qids
+    )
+
+    for i in range(
+        0,
+        len(linked_qids),
+        50
+    ):
+        group = linked_qids[
+            i:i + 50
+        ]
+
+        linked_entities.update(
+            fetch_entities(group)
+        )
+
+        time.sleep(1)
+
+    # ------------------------------------------------
+    # 5. Mise à jour Supabase
+    # ------------------------------------------------
+
+    now = datetime.now(
+        timezone.utc
+    ).isoformat()
+
+    updated = 0
+
+    for item in matches.values():
+        fighter = item["fighter"]
+        qid = item["qid"]
+
+        entity = (
+            fighter_entities
+            .get(qid)
+        )
+
+        if not entity:
+            continue
+
+        nationality_qid = (
+            first_entity_claim(
+                entity,
+                "P27"
+            )
+        )
+
+        birth_place_qid = (
+            first_entity_claim(
+                entity,
+                "P19"
+            )
+        )
+
+        gender_qid = (
+            first_entity_claim(
+                entity,
+                "P21"
+            )
+        )
+
+        nationality_entity = (
+            linked_entities.get(
+                nationality_qid
+            )
+        )
+
+        birth_place_entity = (
+            linked_entities.get(
+                birth_place_qid
+            )
+        )
+
+        gender_entity = (
+            linked_entities.get(
+                gender_qid
+            )
+        )
+
+        nationality = get_label(
+            nationality_entity
+        )
+
+        country_code = (
+            iso_country_code(
+                nationality_entity
+            )
+        )
+
+        birth_place = get_label(
+            birth_place_entity
+        )
+
+        gender = normalize_gender(
+            get_label(
+                gender_entity
+            )
+        )
+
+        website = (
+            first_string_claim(
+                entity,
+                "P856"
+            )
+        )
+
+        update = {
+            "wikidata_id": qid,
+            "wikidata_updated_at": now,
+            "fightiq_updated_at": now,
+        }
+
+        if (
+            nationality
+            and not fighter.get(
+                "nationality"
+            )
+        ):
+            update[
+                "nationality"
+            ] = nationality
+
+        if (
+            country_code
+            and not fighter.get(
+                "country_code"
+            )
+        ):
+            update[
+                "country_code"
+            ] = country_code
+
+        if (
+            birth_place
+            and not fighter.get(
+                "birth_place"
+            )
+        ):
+            update[
+                "birth_place"
+            ] = birth_place
+
+        if (
+            gender
+            and not fighter.get(
+                "gender"
+            )
+        ):
+            update[
+                "gender"
+            ] = gender
+
+        if (
+            website
+            and not fighter.get(
+                "website"
+            )
+        ):
+            update[
+                "website"
+            ] = website
+
+        (
+            supabase
+            .table("fighters")
+            .update(update)
+            .eq(
+                "id",
+                fighter["id"]
+            )
+            .execute()
+        )
+
+        updated += 1
 
     print()
     print(
@@ -464,13 +609,14 @@ def main():
         "complete"
     )
     print(
-        f"Processed: {processed}"
+        f"Found: {len(matches)}"
     )
     print(
-        f"Matched: {matched}"
+        f"Updated: {updated}"
     )
     print(
-        f"Not found: {len(not_found)}"
+        f"Not found: "
+        f"{len(not_found)}"
     )
 
     if not_found:
