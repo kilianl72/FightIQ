@@ -26,3 +26,8 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         run: python scripts/import_fighters.py
+
+      - name: Test Cito UFC rankings
+        env:
+          CITO_API_KEY: ${{ secrets.CITO_API_KEY }}
+        run: python scripts/test_cito_rankings.py
