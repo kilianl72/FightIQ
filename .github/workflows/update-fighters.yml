@@ -21,13 +21,15 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Import fighters into Supabase
+      - name: Import fighters from UFCStats
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         run: python scripts/import_fighters.py
 
-      - name: Test Cito UFC rankings
+      - name: Enrich UFC rankings with Cito
         env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           CITO_API_KEY: ${{ secrets.CITO_API_KEY }}
-        run: python scripts/test_cito_rankings.py
+        run: python scripts/enrich_rankings_cito.py
