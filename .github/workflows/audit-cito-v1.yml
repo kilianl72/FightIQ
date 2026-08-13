@@ -1,0 +1,25 @@
+name: V1 Audit Cito Fighters
+
+on:
+  workflow_dispatch:
+
+jobs:
+  audit-cito:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout FightIQ
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Audit Cito fighter directory V1
+        env:
+          CITO_API_KEY: ${{ secrets.CITO_API_KEY }}
+        run: python scripts/audit_cito_fighters_v1.py
