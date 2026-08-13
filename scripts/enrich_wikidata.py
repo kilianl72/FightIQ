@@ -10,23 +10,37 @@ from urllib.request import Request, urlopen
 from supabase import create_client
 
 
+# ============================================================
+# FightIQ - Wikidata enrichment
+# Version : V2
+#
+# Objectifs V2 :
+# - pagination Supabase
+# - aucun match automatique sur le nom seul
+# - validation par date de naissance
+# - détection des QID déjà utilisés
+# - conservation des conflits / cas douteux
+# - aucun conflit ne fait planter le workflow
+# ============================================================
+
+
 SPARQL_URL = "https://query.wikidata.org/sparql"
 
 USER_AGENT = (
-    "FightIQ/1.0 "
+    "FightIQ/2.0 "
     "(MMA fighter database enrichment)"
 )
 
-# Nombre maximal de combattants FightIQ examinés par run
+# Nombre maximal de combattants examinés par run
 BATCH_LIMIT = 5000
 
-# Nombre de combattants récupérés par page Supabase
+# Pagination Supabase
 SUPABASE_PAGE_SIZE = 1000
 
-# Nombre de noms envoyés dans une seule requête SPARQL
+# Nombre de noms par requête Wikidata
 SPARQL_BATCH_SIZE = 20
 
-# Petite pause entre les requêtes groupées
+# Pause entre deux requêtes Wikidata
 REQUEST_DELAY = 5
 
 MAX_RETRIES = 5
@@ -301,6 +315,11 @@ def normalize_date(value):
     return None
 
 
+# ============================================================
+# SUPABASE
+# ============================================================
+
+
 def fetch_fighters(supabase):
     fighters = []
     offset = 0
@@ -330,8 +349,10 @@ def fetch_fighters(supabase):
                 "id,"
                 "display_name,"
                 "date_of_birth,"
+                "ufcstats_id,"
                 "wikidata_id,"
                 "wikidata_updated_at,"
+                "wikidata_checked_at,"
                 "nationality,"
                 "country_code,"
                 "gender,"
@@ -343,7 +364,7 @@ def fetch_fighters(supabase):
                 "null"
             )
             .is_(
-                "wikidata_updated_at",
+                "wikidata_checked_at",
                 "null"
             )
             .order(
@@ -374,6 +395,41 @@ def fetch_fighters(supabase):
         offset += current_page_size
 
     return fighters[:BATCH_LIMIT]
+
+
+def find_existing_qid_owner(
+    supabase,
+    qid,
+):
+    response = (
+        supabase
+        .table("fighters")
+        .select(
+            "id,"
+            "display_name,"
+            "date_of_birth,"
+            "ufcstats_id,"
+            "wikidata_id"
+        )
+        .eq(
+            "wikidata_id",
+            qid
+        )
+        .limit(1)
+        .execute()
+    )
+
+    rows = response.data or []
+
+    if not rows:
+        return None
+
+    return rows[0]
+
+
+# ============================================================
+# WIKIDATA RESULTS
+# ============================================================
 
 
 def parse_results(payload):
@@ -521,12 +577,21 @@ def parse_results(payload):
     return candidates
 
 
+# ============================================================
+# MATCHING V2
+# ============================================================
+
+
 def choose_candidate(
     fighter,
-    candidates
+    candidates,
 ):
     if not candidates:
-        return None, "not_found"
+        return (
+            None,
+            "not_found_exact",
+            "exact_name_no_result",
+        )
 
     values = list(
         candidates.values()
@@ -535,6 +600,11 @@ def choose_candidate(
     fighter_dob = fighter.get(
         "date_of_birth"
     )
+
+    # --------------------------------------------------------
+    # La date de naissance FightIQ est disponible.
+    # Elle devient notre preuve principale.
+    # --------------------------------------------------------
 
     if fighter_dob:
         dob_matches = [
@@ -551,50 +621,107 @@ def choose_candidate(
         if len(dob_matches) == 1:
             return (
                 dob_matches[0],
-                "dob"
+                "matched",
+                "exact_name+dob",
             )
 
+        if len(dob_matches) > 1:
+            return (
+                None,
+                "ambiguous",
+                "multiple_candidates_same_dob",
+            )
+
+        # Aucun DOB Wikidata ne correspond.
         if len(values) == 1:
+            candidate = values[0]
+
             candidate_dob = (
-                values[0].get(
+                candidate.get(
                     "date_of_birth"
                 )
             )
 
-            if (
-                candidate_dob
-                and candidate_dob
-                != fighter_dob
-            ):
+            if candidate_dob:
                 return (
-                    None,
-                    "dob_mismatch"
+                    candidate,
+                    "dob_mismatch",
+                    "exact_name_dob_conflict",
                 )
 
+            return (
+                candidate,
+                "needs_review",
+                "exact_name_missing_wikidata_dob",
+            )
+
+        return (
+            None,
+            "ambiguous",
+            "multiple_candidates_no_dob_match",
+        )
+
+    # --------------------------------------------------------
+    # Pas de date de naissance FightIQ.
+    # On refuse désormais de matcher sur le nom seul.
+    # --------------------------------------------------------
+
     if len(values) == 1:
-        return values[0], "unique"
+        return (
+            values[0],
+            "needs_review",
+            "exact_name_without_fightiq_dob",
+        )
 
-    return None, "ambiguous"
+    return (
+        None,
+        "ambiguous",
+        "multiple_candidates_without_fightiq_dob",
+    )
 
 
-def mark_checked(
+# ============================================================
+# TRACKING
+# ============================================================
+
+
+def save_tracking(
     supabase,
     fighter_id,
     timestamp,
+    status,
+    method=None,
+    candidate_id=None,
+    note=None,
 ):
+    update = {
+        "wikidata_match_status":
+            status,
+        "wikidata_match_method":
+            method,
+        "wikidata_candidate_id":
+            candidate_id,
+        "wikidata_match_note":
+            note,
+        "wikidata_checked_at":
+            timestamp,
+    }
+
     (
         supabase
         .table("fighters")
-        .update({
-            "wikidata_updated_at":
-                timestamp
-        })
+        .update(update)
         .eq(
             "id",
             fighter_id
         )
         .execute()
     )
+
+
+# ============================================================
+# CONFIRMED MATCH
+# ============================================================
 
 
 def save_match(
@@ -606,8 +733,25 @@ def save_match(
     update = {
         "wikidata_id":
             candidate["qid"],
+
         "wikidata_updated_at":
             timestamp,
+
+        "wikidata_checked_at":
+            timestamp,
+
+        "wikidata_match_status":
+            "matched",
+
+        "wikidata_match_method":
+            "exact_name+dob",
+
+        "wikidata_candidate_id":
+            candidate["qid"],
+
+        "wikidata_match_note":
+            None,
+
         "fightiq_updated_at":
             timestamp,
     }
@@ -697,6 +841,74 @@ def save_match(
     )
 
 
+# ============================================================
+# QID CONFLICT
+# ============================================================
+
+
+def build_conflict_note(
+    fighter,
+    candidate,
+    existing_owner,
+):
+    current_name = (
+        fighter.get(
+            "display_name"
+        )
+        or "unknown"
+    )
+
+    current_ufcstats = (
+        fighter.get(
+            "ufcstats_id"
+        )
+        or "unknown"
+    )
+
+    existing_name = (
+        existing_owner.get(
+            "display_name"
+        )
+        or "unknown"
+    )
+
+    existing_ufcstats = (
+        existing_owner.get(
+            "ufcstats_id"
+        )
+        or "unknown"
+    )
+
+    existing_dob = (
+        existing_owner.get(
+            "date_of_birth"
+        )
+        or "unknown"
+    )
+
+    candidate_dob = (
+        candidate.get(
+            "date_of_birth"
+        )
+        or "unknown"
+    )
+
+    return (
+        f"QID {candidate['qid']} already used by "
+        f"{existing_name} "
+        f"(UFCStats {existing_ufcstats}, "
+        f"DOB {existing_dob}). "
+        f"Current fighter: {current_name} "
+        f"(UFCStats {current_ufcstats}). "
+        f"Wikidata DOB: {candidate_dob}."
+    )
+
+
+# ============================================================
+# MAIN
+# ============================================================
+
+
 def main():
     supabase_url = os.environ.get(
         "SUPABASE_URL"
@@ -723,8 +935,9 @@ def main():
         supabase
     )
 
+    print()
     print(
-        "FightIQ Wikidata batch: "
+        "FightIQ Wikidata V2 batch: "
         f"{len(fighters)} fighters"
     )
 
@@ -735,14 +948,16 @@ def main():
         )
         return
 
-    now = datetime.now(
+    timestamp = datetime.now(
         timezone.utc
     ).isoformat()
 
     matched = 0
     not_found = 0
+    needs_review = 0
     ambiguous = 0
     dob_mismatch = 0
+    qid_conflict = 0
     deferred = 0
 
     for start in range(
@@ -772,7 +987,6 @@ def main():
         )
 
         print()
-
         print(
             "SPARQL batch "
             f"{batch_number}: "
@@ -791,8 +1005,8 @@ def main():
             deferred += len(group)
 
             print(
-                "Batch deferred. "
-                "No FightIQ data changed."
+                "BATCH DEFERRED: "
+                "no FightIQ data changed."
             )
 
             time.sleep(
@@ -817,47 +1031,157 @@ def main():
                 )
             )
 
-            candidate, status = (
-                choose_candidate(
-                    fighter,
-                    fighter_candidates,
-                )
+            (
+                candidate,
+                status,
+                method,
+            ) = choose_candidate(
+                fighter,
+                fighter_candidates,
             )
 
-            if candidate:
+            # =================================================
+            # MATCH POTENTIELLEMENT VALIDÉ
+            # =================================================
+
+            if status == "matched":
+                qid = candidate[
+                    "qid"
+                ]
+
+                existing_owner = (
+                    find_existing_qid_owner(
+                        supabase,
+                        qid,
+                    )
+                )
+
+                if (
+                    existing_owner
+                    and existing_owner[
+                        "id"
+                    ] != fighter["id"]
+                ):
+                    note = build_conflict_note(
+                        fighter,
+                        candidate,
+                        existing_owner,
+                    )
+
+                    save_tracking(
+                        supabase,
+                        fighter["id"],
+                        timestamp,
+                        "qid_conflict",
+                        method,
+                        qid,
+                        note,
+                    )
+
+                    qid_conflict += 1
+
+                    print(
+                        "QID CONFLICT: "
+                        f"{name} -> {qid} "
+                        f"already used by "
+                        f"{existing_owner.get('display_name')}"
+                    )
+
+                    continue
+
                 save_match(
                     supabase,
                     fighter,
                     candidate,
-                    now,
+                    timestamp,
                 )
 
                 matched += 1
 
                 print(
-                    "MATCH: "
-                    f"{name} -> "
-                    f"{candidate['qid']} "
-                    f"({status})"
+                    "MATCH CONFIRMED: "
+                    f"{name} -> {qid} "
+                    "(name + DOB)"
                 )
 
                 continue
 
-            mark_checked(
-                supabase,
-                fighter["id"],
-                now,
-            )
+            # =================================================
+            # PAS DE MATCH AUTOMATIQUE
+            # =================================================
 
-            if status == "not_found":
+            candidate_id = None
+
+            if candidate:
+                candidate_id = (
+                    candidate.get(
+                        "qid"
+                    )
+                )
+
+            if status == "not_found_exact":
+                save_tracking(
+                    supabase,
+                    fighter["id"],
+                    timestamp,
+                    status,
+                    method,
+                    None,
+                    (
+                        "No exact English "
+                        "Wikidata label or alias "
+                        "found."
+                    ),
+                )
+
                 not_found += 1
 
                 print(
-                    "NOT FOUND: "
+                    "NOT FOUND EXACT: "
                     f"{name}"
                 )
 
+            elif status == "needs_review":
+                save_tracking(
+                    supabase,
+                    fighter["id"],
+                    timestamp,
+                    status,
+                    method,
+                    candidate_id,
+                    (
+                        "Candidate found but "
+                        "automatic identity "
+                        "validation is insufficient."
+                    ),
+                )
+
+                needs_review += 1
+
+                print(
+                    "NEEDS REVIEW: "
+                    f"{name}"
+                    + (
+                        f" -> {candidate_id}"
+                        if candidate_id
+                        else ""
+                    )
+                )
+
             elif status == "ambiguous":
+                save_tracking(
+                    supabase,
+                    fighter["id"],
+                    timestamp,
+                    status,
+                    method,
+                    candidate_id,
+                    (
+                        "Multiple possible "
+                        "Wikidata candidates."
+                    ),
+                )
+
                 ambiguous += 1
 
                 print(
@@ -865,15 +1189,43 @@ def main():
                     f"{name}"
                 )
 
-            elif (
-                status
-                == "dob_mismatch"
-            ):
+            elif status == "dob_mismatch":
+                candidate_dob = None
+
+                if candidate:
+                    candidate_dob = (
+                        candidate.get(
+                            "date_of_birth"
+                        )
+                    )
+
+                note = (
+                    "FightIQ DOB: "
+                    f"{fighter.get('date_of_birth')}; "
+                    "Wikidata DOB: "
+                    f"{candidate_dob}."
+                )
+
+                save_tracking(
+                    supabase,
+                    fighter["id"],
+                    timestamp,
+                    status,
+                    method,
+                    candidate_id,
+                    note,
+                )
+
                 dob_mismatch += 1
 
                 print(
                     "DOB MISMATCH: "
                     f"{name}"
+                    + (
+                        f" -> {candidate_id}"
+                        if candidate_id
+                        else ""
+                    )
                 )
 
         time.sleep(
@@ -881,18 +1233,26 @@ def main():
         )
 
     print()
-
     print(
-        "FightIQ Wikidata "
-        "enrichment complete"
+        "================================"
+    )
+    print(
+        "FightIQ Wikidata V2 complete"
+    )
+    print(
+        "================================"
     )
 
     print(
-        f"Matched: {matched}"
+        f"Matched confirmed: {matched}"
     )
 
     print(
-        f"Not found: {not_found}"
+        f"Not found exact: {not_found}"
+    )
+
+    print(
+        f"Needs review: {needs_review}"
     )
 
     print(
@@ -900,8 +1260,11 @@ def main():
     )
 
     print(
-        "DOB mismatch: "
-        f"{dob_mismatch}"
+        f"DOB mismatch: {dob_mismatch}"
+    )
+
+    print(
+        f"QID conflicts: {qid_conflict}"
     )
 
     print(
