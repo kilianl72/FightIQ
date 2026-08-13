@@ -1,53 +1,72 @@
 import json
 import os
 import time
+from collections import defaultdict
 from datetime import datetime, timezone
-from urllib.error import HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from supabase import create_client
 
 
-WIKIDATA_API = "https://www.wikidata.org/w/api.php"
+SPARQL_URL = "https://query.wikidata.org/sparql"
 
 USER_AGENT = (
     "FightIQ/1.0 "
     "(MMA fighter database enrichment)"
 )
 
+# Nombre de combattants FightIQ examinés par run
 BATCH_LIMIT = 100
 
-# Une recherche par combattant, espacée volontairement
-SEARCH_DELAY = 1.0
+# Nombre de noms envoyés dans une seule requête SPARQL
+SPARQL_BATCH_SIZE = 20
 
-# Nombre d'essais si Wikidata renvoie 429
+# Petite pause entre les requêtes groupées
+REQUEST_DELAY = 5
+
 MAX_RETRIES = 5
 
 
-def api_get(params):
-    params["format"] = "json"
-    params["maxlag"] = "5"
-
-    url = (
-        WIKIDATA_API
-        + "?"
-        + urlencode(params)
+def escape_sparql_string(value):
+    return (
+        value
+        .replace("\\", "\\\\")
+        .replace('"', '\\"')
+        .replace("\n", " ")
+        .replace("\r", " ")
     )
+
+
+def sparql_request(query):
+    data = urlencode({
+        "query": query,
+        "format": "json",
+    }).encode("utf-8")
 
     for attempt in range(MAX_RETRIES):
         request = Request(
-            url,
+            SPARQL_URL,
+            data=data,
             headers={
                 "User-Agent": USER_AGENT,
-                "Accept": "application/json",
+                "Accept": (
+                    "application/"
+                    "sparql-results+json"
+                ),
+                "Content-Type": (
+                    "application/"
+                    "x-www-form-urlencoded"
+                ),
             },
+            method="POST",
         )
 
         try:
             with urlopen(
                 request,
-                timeout=30
+                timeout=60
             ) as response:
                 return json.loads(
                     response
@@ -56,218 +75,245 @@ def api_get(params):
                 )
 
         except HTTPError as exc:
-            if exc.code != 429:
-                raise
+            if exc.code not in {
+                429,
+                500,
+                502,
+                503,
+                504,
+            }:
+                print(
+                    "Wikidata HTTP error: "
+                    f"{exc.code}"
+                )
+                return None
 
-            wait = 2 ** attempt
+            wait = min(
+                60,
+                5 * (2 ** attempt)
+            )
 
             print(
-                f"Wikidata 429 - "
-                f"retry in {wait}s"
+                "Wikidata temporarily "
+                f"unavailable ({exc.code}). "
+                f"Retry in {wait}s."
             )
 
             time.sleep(wait)
 
-    raise RuntimeError(
-        "Wikidata rate limit "
-        "after retries"
-    )
-
-
-def search_fighter(name):
-    payload = api_get({
-        "action": "wbsearchentities",
-        "search": name,
-        "language": "en",
-        "uselang": "en",
-        "limit": 5,
-        "type": "item",
-    })
-
-    results = payload.get(
-        "search",
-        []
-    )
-
-    mma_keywords = (
-        "mixed martial",
-        "mma",
-        "ufc",
-        "martial artist",
-        "mixed martial artist",
-    )
-
-    for result in results:
-        description = (
-            result.get(
-                "description"
-            )
-            or ""
-        ).lower()
-
-        if any(
-            word in description
-            for word in mma_keywords
-        ):
-            return result.get("id")
-
-    # Sécurité :
-    # on ne prend PAS le premier
-    # homonyme au hasard.
-    return None
-
-
-def fetch_entities(qids):
-    if not qids:
-        return {}
-
-    payload = api_get({
-        "action": "wbgetentities",
-        "ids": "|".join(qids),
-        "props": "claims|labels",
-        "languages": "fr|en",
-        "languagefallback": "1",
-    })
-
-    return payload.get(
-        "entities",
-        {}
-    )
-
-
-def first_entity_claim(
-    entity,
-    property_id
-):
-    claims = (
-        entity
-        .get("claims", {})
-        .get(property_id, [])
-    )
-
-    for claim in claims:
-        try:
-            value = (
-                claim["mainsnak"]
-                ["datavalue"]
-                ["value"]
-            )
-
-            if (
-                isinstance(value, dict)
-                and value.get("id")
-            ):
-                return value["id"]
-
         except (
-            KeyError,
-            TypeError
-        ):
-            continue
-
-    return None
-
-
-def first_string_claim(
-    entity,
-    property_id
-):
-    claims = (
-        entity
-        .get("claims", {})
-        .get(property_id, [])
-    )
-
-    for claim in claims:
-        try:
-            value = (
-                claim["mainsnak"]
-                ["datavalue"]
-                ["value"]
+            URLError,
+            TimeoutError,
+        ) as exc:
+            wait = min(
+                60,
+                5 * (2 ** attempt)
             )
 
-            if isinstance(
-                value,
-                str
-            ):
-                return value
+            print(
+                "Wikidata network error: "
+                f"{exc}. "
+                f"Retry in {wait}s."
+            )
 
-        except (
-            KeyError,
-            TypeError
-        ):
-            continue
+            time.sleep(wait)
 
+    print(
+        "Wikidata batch deferred "
+        "after retries."
+    )
+
+    # Important :
+    # on n'arrête PAS le workflow.
     return None
 
 
-def get_label(entity):
-    if not entity:
+def build_query(names):
+    values = "\n".join(
+        f'"{escape_sparql_string(name)}"@en'
+        for name in names
+    )
+
+    return f"""
+PREFIX wd:
+    <http://www.wikidata.org/entity/>
+
+PREFIX wdt:
+    <http://www.wikidata.org/prop/direct/>
+
+PREFIX rdfs:
+    <http://www.w3.org/2000/01/rdf-schema#>
+
+PREFIX skos:
+    <http://www.w3.org/2004/02/skos/core#>
+
+
+SELECT DISTINCT
+    ?wantedLabel
+    ?item
+    ?dob
+    ?country
+    ?countryLabel
+    ?countryCode
+    ?birthPlace
+    ?birthPlaceLabel
+    ?gender
+    ?genderLabel
+    ?website
+
+WHERE {{
+
+    VALUES ?wantedLabel {{
+        {values}
+    }}
+
+    {{
+        ?item rdfs:label ?wantedLabel .
+    }}
+    UNION
+    {{
+        ?item skos:altLabel ?wantedLabel .
+    }}
+
+    # On ne garde que les personnes
+    # identifiées comme combattants MMA.
+    ?item
+        wdt:P106/wdt:P279*
+        wd:Q11607585 .
+
+    OPTIONAL {{
+        ?item wdt:P569 ?dob .
+    }}
+
+    OPTIONAL {{
+        ?item wdt:P27 ?country .
+
+        OPTIONAL {{
+            ?country
+                rdfs:label
+                ?countryLabel .
+
+            FILTER(
+                LANG(?countryLabel)
+                = "en"
+            )
+        }}
+
+        OPTIONAL {{
+            ?country
+                wdt:P297
+                ?countryCode .
+        }}
+    }}
+
+    OPTIONAL {{
+        ?item
+            wdt:P19
+            ?birthPlace .
+
+        OPTIONAL {{
+            ?birthPlace
+                rdfs:label
+                ?birthPlaceLabel .
+
+            FILTER(
+                LANG(?birthPlaceLabel)
+                = "en"
+            )
+        }}
+    }}
+
+    OPTIONAL {{
+        ?item
+            wdt:P21
+            ?gender .
+
+        OPTIONAL {{
+            ?gender
+                rdfs:label
+                ?genderLabel .
+
+            FILTER(
+                LANG(?genderLabel)
+                = "en"
+            )
+        }}
+    }}
+
+    OPTIONAL {{
+        ?item
+            wdt:P856
+            ?website .
+    }}
+}}
+"""
+
+
+def binding_value(binding, key):
+    value = binding.get(key)
+
+    if not value:
         return None
 
-    labels = entity.get(
-        "labels",
-        {}
-    )
-
-    if "fr" in labels:
-        return labels[
-            "fr"
-        ].get("value")
-
-    if "en" in labels:
-        return labels[
-            "en"
-        ].get("value")
-
-    return None
+    return value.get("value")
 
 
-def normalize_gender(label):
-    if not label:
+def qid_from_uri(uri):
+    if not uri:
         return None
 
-    value = label.lower()
+    return uri.rstrip(
+        "/"
+    ).split("/")[-1]
 
-    if value in (
+
+def normalize_gender(value):
+    if not value:
+        return None
+
+    normalized = (
+        value
+        .lower()
+        .strip()
+    )
+
+    if normalized in {
         "male",
-        "masculin",
-        "homme",
-    ):
+        "man",
+    }:
         return "male"
 
-    if value in (
+    if normalized in {
         "female",
-        "féminin",
-        "femme",
-    ):
+        "woman",
+    }:
         return "female"
 
-    return label
+    return value
 
 
-def iso_country_code(
-    country_entity
-):
-    if not country_entity:
+def normalize_date(value):
+    if not value:
         return None
 
-    return first_string_claim(
-        country_entity,
-        "P297"
-    )
+    # Wikidata renvoie généralement :
+    # 1990-01-01T00:00:00Z
+    if len(value) >= 10:
+        return value[:10]
+
+    return None
 
 
-def fetch_fighters(
-    supabase
-):
+def fetch_fighters(supabase):
     response = (
         supabase
         .table("fighters")
         .select(
             "id,"
             "display_name,"
+            "date_of_birth,"
             "wikidata_id,"
+            "wikidata_updated_at,"
             "nationality,"
             "country_code,"
             "gender,"
@@ -278,11 +324,354 @@ def fetch_fighters(
             "wikidata_id",
             "null"
         )
-        .limit(BATCH_LIMIT)
+        .is_(
+            "wikidata_updated_at",
+            "null"
+        )
+        .order(
+            "display_name"
+        )
+        .limit(
+            BATCH_LIMIT
+        )
         .execute()
     )
 
     return response.data or []
+
+
+def parse_results(payload):
+    candidates = defaultdict(
+        dict
+    )
+
+    bindings = (
+        payload
+        .get("results", {})
+        .get("bindings", [])
+    )
+
+    for binding in bindings:
+        name = binding_value(
+            binding,
+            "wantedLabel"
+        )
+
+        item_uri = binding_value(
+            binding,
+            "item"
+        )
+
+        qid = qid_from_uri(
+            item_uri
+        )
+
+        if (
+            not name
+            or not qid
+        ):
+            continue
+
+        candidate = (
+            candidates[name]
+            .setdefault(
+                qid,
+                {
+                    "qid": qid,
+                    "date_of_birth": None,
+                    "nationality": None,
+                    "country_code": None,
+                    "birth_place": None,
+                    "gender": None,
+                    "website": None,
+                },
+            )
+        )
+
+        dob = normalize_date(
+            binding_value(
+                binding,
+                "dob"
+            )
+        )
+
+        nationality = (
+            binding_value(
+                binding,
+                "countryLabel"
+            )
+        )
+
+        country_code = (
+            binding_value(
+                binding,
+                "countryCode"
+            )
+        )
+
+        birth_place = (
+            binding_value(
+                binding,
+                "birthPlaceLabel"
+            )
+        )
+
+        gender = normalize_gender(
+            binding_value(
+                binding,
+                "genderLabel"
+            )
+        )
+
+        website = binding_value(
+            binding,
+            "website"
+        )
+
+        if (
+            dob
+            and not candidate[
+                "date_of_birth"
+            ]
+        ):
+            candidate[
+                "date_of_birth"
+            ] = dob
+
+        if (
+            nationality
+            and not candidate[
+                "nationality"
+            ]
+        ):
+            candidate[
+                "nationality"
+            ] = nationality
+
+        if (
+            country_code
+            and not candidate[
+                "country_code"
+            ]
+        ):
+            candidate[
+                "country_code"
+            ] = country_code
+
+        if (
+            birth_place
+            and not candidate[
+                "birth_place"
+            ]
+        ):
+            candidate[
+                "birth_place"
+            ] = birth_place
+
+        if (
+            gender
+            and not candidate[
+                "gender"
+            ]
+        ):
+            candidate[
+                "gender"
+            ] = gender
+
+        if (
+            website
+            and not candidate[
+                "website"
+            ]
+        ):
+            candidate[
+                "website"
+            ] = website
+
+    return candidates
+
+
+def choose_candidate(
+    fighter,
+    candidates
+):
+    if not candidates:
+        return None, "not_found"
+
+    values = list(
+        candidates.values()
+    )
+
+    fighter_dob = fighter.get(
+        "date_of_birth"
+    )
+
+    # Si FightIQ possède déjà la date
+    # de naissance, on s'en sert pour
+    # éviter les homonymes.
+    if fighter_dob:
+        dob_matches = [
+            candidate
+            for candidate in values
+            if (
+                candidate.get(
+                    "date_of_birth"
+                )
+                == fighter_dob
+            )
+        ]
+
+        if len(dob_matches) == 1:
+            return (
+                dob_matches[0],
+                "dob"
+            )
+
+        # Un seul résultat Wikidata,
+        # mais sa date contredit
+        # explicitement UFCStats :
+        # on refuse le rapprochement.
+        if len(values) == 1:
+            candidate_dob = (
+                values[0].get(
+                    "date_of_birth"
+                )
+            )
+
+            if (
+                candidate_dob
+                and candidate_dob
+                != fighter_dob
+            ):
+                return (
+                    None,
+                    "dob_mismatch"
+                )
+
+    if len(values) == 1:
+        return values[0], "unique"
+
+    return None, "ambiguous"
+
+
+def mark_checked(
+    supabase,
+    fighter_id,
+    timestamp,
+):
+    (
+        supabase
+        .table("fighters")
+        .update({
+            "wikidata_updated_at":
+                timestamp
+        })
+        .eq(
+            "id",
+            fighter_id
+        )
+        .execute()
+    )
+
+
+def save_match(
+    supabase,
+    fighter,
+    candidate,
+    timestamp,
+):
+    update = {
+        "wikidata_id":
+            candidate["qid"],
+        "wikidata_updated_at":
+            timestamp,
+        "fightiq_updated_at":
+            timestamp,
+    }
+
+    if (
+        candidate.get(
+            "nationality"
+        )
+        and not fighter.get(
+            "nationality"
+        )
+    ):
+        update[
+            "nationality"
+        ] = candidate[
+            "nationality"
+        ]
+
+    if (
+        candidate.get(
+            "country_code"
+        )
+        and not fighter.get(
+            "country_code"
+        )
+    ):
+        update[
+            "country_code"
+        ] = (
+            candidate[
+                "country_code"
+            ]
+            .upper()
+        )
+
+    if (
+        candidate.get(
+            "birth_place"
+        )
+        and not fighter.get(
+            "birth_place"
+        )
+    ):
+        update[
+            "birth_place"
+        ] = candidate[
+            "birth_place"
+        ]
+
+    if (
+        candidate.get(
+            "gender"
+        )
+        and not fighter.get(
+            "gender"
+        )
+    ):
+        update[
+            "gender"
+        ] = candidate[
+            "gender"
+        ]
+
+    if (
+        candidate.get(
+            "website"
+        )
+        and not fighter.get(
+            "website"
+        )
+    ):
+        update[
+            "website"
+        ] = candidate[
+            "website"
+        ]
+
+    (
+        supabase
+        .table("fighters")
+        .update(update)
+        .eq(
+            "id",
+            fighter["id"]
+        )
+        .execute()
+    )
 
 
 def main():
@@ -316,314 +705,191 @@ def main():
         f"{len(fighters)} fighters"
     )
 
-    matches = {}
-    not_found = []
-
-    # ------------------------------------------------
-    # 1. Recherche des QID
-    # ------------------------------------------------
-
-    for index, fighter in enumerate(
-        fighters,
-        start=1
-    ):
-        name = fighter.get(
-            "display_name"
+    if not fighters:
+        print(
+            "No unchecked fighters "
+            "remaining."
         )
-
-        if not name:
-            continue
-
-        try:
-            qid = search_fighter(
-                name
-            )
-
-            if qid:
-                matches[
-                    fighter["id"]
-                ] = {
-                    "fighter": fighter,
-                    "qid": qid,
-                }
-
-                print(
-                    f"[{index}] FOUND: "
-                    f"{name} -> {qid}"
-                )
-
-            else:
-                not_found.append(name)
-
-                print(
-                    f"[{index}] NOT FOUND: "
-                    f"{name}"
-                )
-
-        except Exception as exc:
-            print(
-                f"[{index}] ERROR: "
-                f"{name}: {exc}"
-            )
-
-        time.sleep(
-            SEARCH_DELAY
-        )
-
-    # ------------------------------------------------
-    # 2. Récupération groupée des fiches fighters
-    # ------------------------------------------------
-
-    fighter_qids = [
-        item["qid"]
-        for item in matches.values()
-    ]
-
-    fighter_entities = {}
-
-    for i in range(
-        0,
-        len(fighter_qids),
-        50
-    ):
-        group = fighter_qids[
-            i:i + 50
-        ]
-
-        fighter_entities.update(
-            fetch_entities(group)
-        )
-
-        time.sleep(1)
-
-    # ------------------------------------------------
-    # 3. Collecte des QID liés
-    # ------------------------------------------------
-
-    linked_qids = set()
-
-    for item in matches.values():
-        entity = (
-            fighter_entities
-            .get(item["qid"], {})
-        )
-
-        for property_id in (
-            "P27",  # citizenship
-            "P19",  # birthplace
-            "P21",  # gender
-        ):
-            linked = first_entity_claim(
-                entity,
-                property_id
-            )
-
-            if linked:
-                linked_qids.add(linked)
-
-    # ------------------------------------------------
-    # 4. Récupération groupée pays / lieux / sexe
-    # ------------------------------------------------
-
-    linked_entities = {}
-
-    linked_qids = list(
-        linked_qids
-    )
-
-    for i in range(
-        0,
-        len(linked_qids),
-        50
-    ):
-        group = linked_qids[
-            i:i + 50
-        ]
-
-        linked_entities.update(
-            fetch_entities(group)
-        )
-
-        time.sleep(1)
-
-    # ------------------------------------------------
-    # 5. Mise à jour Supabase
-    # ------------------------------------------------
+        return
 
     now = datetime.now(
         timezone.utc
     ).isoformat()
 
-    updated = 0
+    matched = 0
+    not_found = 0
+    ambiguous = 0
+    dob_mismatch = 0
+    deferred = 0
 
-    for item in matches.values():
-        fighter = item["fighter"]
-        qid = item["qid"]
+    for start in range(
+        0,
+        len(fighters),
+        SPARQL_BATCH_SIZE
+    ):
+        group = fighters[
+            start:
+            start + SPARQL_BATCH_SIZE
+        ]
 
-        entity = (
-            fighter_entities
-            .get(qid)
+        names = [
+            fighter[
+                "display_name"
+            ]
+            for fighter in group
+            if fighter.get(
+                "display_name"
+            )
+        ]
+
+        batch_number = (
+            start
+            // SPARQL_BATCH_SIZE
+            + 1
         )
 
-        if not entity:
+        print()
+        print(
+            "SPARQL batch "
+            f"{batch_number}: "
+            f"{len(names)} fighters"
+        )
+
+        query = build_query(
+            names
+        )
+
+        payload = sparql_request(
+            query
+        )
+
+        # Si Wikidata bloque ce lot,
+        # on ne marque aucun combattant
+        # comme vérifié.
+        # Ils seront repris lors
+        # d'un prochain run.
+        if payload is None:
+            deferred += len(group)
+
+            print(
+                "Batch deferred. "
+                "No FightIQ data changed."
+            )
+
+            time.sleep(
+                REQUEST_DELAY
+            )
             continue
 
-        nationality_qid = (
-            first_entity_claim(
-                entity,
-                "P27"
-            )
+        results = parse_results(
+            payload
         )
 
-        birth_place_qid = (
-            first_entity_claim(
-                entity,
-                "P19"
+        for fighter in group:
+            name = fighter.get(
+                "display_name"
             )
+
+            fighter_candidates = (
+                results.get(
+                    name,
+                    {}
+                )
+            )
+
+            candidate, status = (
+                choose_candidate(
+                    fighter,
+                    fighter_candidates,
+                )
+            )
+
+            if candidate:
+                save_match(
+                    supabase,
+                    fighter,
+                    candidate,
+                    now,
+                )
+
+                matched += 1
+
+                print(
+                    "MATCH: "
+                    f"{name} -> "
+                    f"{candidate['qid']} "
+                    f"({status})"
+                )
+
+                continue
+
+            # La requête a bien fonctionné.
+            # On note donc que ce combattant
+            # a déjà été vérifié afin de
+            # progresser dans les 4 582.
+            mark_checked(
+                supabase,
+                fighter["id"],
+                now,
+            )
+
+            if status == "not_found":
+                not_found += 1
+
+                print(
+                    "NOT FOUND: "
+                    f"{name}"
+                )
+
+            elif status == "ambiguous":
+                ambiguous += 1
+
+                print(
+                    "AMBIGUOUS: "
+                    f"{name}"
+                )
+
+            elif (
+                status
+                == "dob_mismatch"
+            ):
+                dob_mismatch += 1
+
+                print(
+                    "DOB MISMATCH: "
+                    f"{name}"
+                )
+
+        time.sleep(
+            REQUEST_DELAY
         )
-
-        gender_qid = (
-            first_entity_claim(
-                entity,
-                "P21"
-            )
-        )
-
-        nationality_entity = (
-            linked_entities.get(
-                nationality_qid
-            )
-        )
-
-        birth_place_entity = (
-            linked_entities.get(
-                birth_place_qid
-            )
-        )
-
-        gender_entity = (
-            linked_entities.get(
-                gender_qid
-            )
-        )
-
-        nationality = get_label(
-            nationality_entity
-        )
-
-        country_code = (
-            iso_country_code(
-                nationality_entity
-            )
-        )
-
-        birth_place = get_label(
-            birth_place_entity
-        )
-
-        gender = normalize_gender(
-            get_label(
-                gender_entity
-            )
-        )
-
-        website = (
-            first_string_claim(
-                entity,
-                "P856"
-            )
-        )
-
-        update = {
-            "wikidata_id": qid,
-            "wikidata_updated_at": now,
-            "fightiq_updated_at": now,
-        }
-
-        if (
-            nationality
-            and not fighter.get(
-                "nationality"
-            )
-        ):
-            update[
-                "nationality"
-            ] = nationality
-
-        if (
-            country_code
-            and not fighter.get(
-                "country_code"
-            )
-        ):
-            update[
-                "country_code"
-            ] = country_code
-
-        if (
-            birth_place
-            and not fighter.get(
-                "birth_place"
-            )
-        ):
-            update[
-                "birth_place"
-            ] = birth_place
-
-        if (
-            gender
-            and not fighter.get(
-                "gender"
-            )
-        ):
-            update[
-                "gender"
-            ] = gender
-
-        if (
-            website
-            and not fighter.get(
-                "website"
-            )
-        ):
-            update[
-                "website"
-            ] = website
-
-        (
-            supabase
-            .table("fighters")
-            .update(update)
-            .eq(
-                "id",
-                fighter["id"]
-            )
-            .execute()
-        )
-
-        updated += 1
 
     print()
     print(
-        "FightIQ Wikidata enrichment "
-        "complete"
-    )
-    print(
-        f"Found: {len(matches)}"
-    )
-    print(
-        f"Updated: {updated}"
-    )
-    print(
-        f"Not found: "
-        f"{len(not_found)}"
+        "FightIQ Wikidata "
+        "enrichment complete"
     )
 
-    if not_found:
-        print(
-            "Not found sample:",
-            not_found[:20]
-        )
+    print(
+        f"Matched: {matched}"
+    )
+
+    print(
+        f"Not found: {not_found}"
+    )
+
+    print(
+        f"Ambiguous: {ambiguous}"
+    )
+
+    print(
+        "DOB mismatch: "
+        f"{dob_mismatch}"
+    )
+
+    print(
+        f"Deferred: {deferred}"
+    )
 
 
 if __name__ == "__main__":
