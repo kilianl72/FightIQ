@@ -17,8 +17,11 @@ USER_AGENT = (
     "(MMA fighter database enrichment)"
 )
 
-# Nombre de combattants FightIQ examinés par run
+# Nombre maximal de combattants FightIQ examinés par run
 BATCH_LIMIT = 5000
+
+# Nombre de combattants récupérés par page Supabase
+SUPABASE_PAGE_SIZE = 1000
 
 # Nombre de noms envoyés dans une seule requête SPARQL
 SPARQL_BATCH_SIZE = 20
@@ -123,8 +126,6 @@ def sparql_request(query):
         "after retries."
     )
 
-    # Important :
-    # on n'arrête PAS le workflow.
     return None
 
 
@@ -175,8 +176,6 @@ WHERE {{
         ?item skos:altLabel ?wantedLabel .
     }}
 
-    # On ne garde que les personnes
-    # identifiées comme combattants MMA.
     ?item
         wdt:P106/wdt:P279*
         wd:Q11607585 .
@@ -296,8 +295,6 @@ def normalize_date(value):
     if not value:
         return None
 
-    # Wikidata renvoie généralement :
-    # 1990-01-01T00:00:00Z
     if len(value) >= 10:
         return value[:10]
 
@@ -305,39 +302,78 @@ def normalize_date(value):
 
 
 def fetch_fighters(supabase):
-    response = (
-        supabase
-        .table("fighters")
-        .select(
-            "id,"
-            "display_name,"
-            "date_of_birth,"
-            "wikidata_id,"
-            "wikidata_updated_at,"
-            "nationality,"
-            "country_code,"
-            "gender,"
-            "birth_place,"
-            "website"
-        )
-        .is_(
-            "wikidata_id",
-            "null"
-        )
-        .is_(
-            "wikidata_updated_at",
-            "null"
-        )
-        .order(
-            "display_name"
-        )
-        .limit(
-            BATCH_LIMIT
-        )
-        .execute()
-    )
+    fighters = []
+    offset = 0
 
-    return response.data or []
+    while len(fighters) < BATCH_LIMIT:
+        remaining = (
+            BATCH_LIMIT
+            - len(fighters)
+        )
+
+        current_page_size = min(
+            SUPABASE_PAGE_SIZE,
+            remaining
+        )
+
+        start = offset
+        end = (
+            start
+            + current_page_size
+            - 1
+        )
+
+        response = (
+            supabase
+            .table("fighters")
+            .select(
+                "id,"
+                "display_name,"
+                "date_of_birth,"
+                "wikidata_id,"
+                "wikidata_updated_at,"
+                "nationality,"
+                "country_code,"
+                "gender,"
+                "birth_place,"
+                "website"
+            )
+            .is_(
+                "wikidata_id",
+                "null"
+            )
+            .is_(
+                "wikidata_updated_at",
+                "null"
+            )
+            .order(
+                "display_name"
+            )
+            .range(
+                start,
+                end
+            )
+            .execute()
+        )
+
+        page = response.data or []
+
+        if not page:
+            break
+
+        fighters.extend(page)
+
+        print(
+            "Supabase fighters fetched: "
+            f"{len(fighters)}"
+        )
+
+        if len(page) < current_page_size:
+            break
+
+        offset += current_page_size
+
+    return fighters[:BATCH_LIMIT]
 
 
 def parse_results(payload):
@@ -395,25 +431,19 @@ def parse_results(payload):
             )
         )
 
-        nationality = (
-            binding_value(
-                binding,
-                "countryLabel"
-            )
+        nationality = binding_value(
+            binding,
+            "countryLabel"
         )
 
-        country_code = (
-            binding_value(
-                binding,
-                "countryCode"
-            )
+        country_code = binding_value(
+            binding,
+            "countryCode"
         )
 
-        birth_place = (
-            binding_value(
-                binding,
-                "birthPlaceLabel"
-            )
+        birth_place = binding_value(
+            binding,
+            "birthPlaceLabel"
         )
 
         gender = normalize_gender(
@@ -506,9 +536,6 @@ def choose_candidate(
         "date_of_birth"
     )
 
-    # Si FightIQ possède déjà la date
-    # de naissance, on s'en sert pour
-    # éviter les homonymes.
     if fighter_dob:
         dob_matches = [
             candidate
@@ -527,10 +554,6 @@ def choose_candidate(
                 "dob"
             )
 
-        # Un seul résultat Wikidata,
-        # mais sa date contredit
-        # explicitement UFCStats :
-        # on refuse le rapprochement.
         if len(values) == 1:
             candidate_dob = (
                 values[0].get(
@@ -749,6 +772,7 @@ def main():
         )
 
         print()
+
         print(
             "SPARQL batch "
             f"{batch_number}: "
@@ -763,11 +787,6 @@ def main():
             query
         )
 
-        # Si Wikidata bloque ce lot,
-        # on ne marque aucun combattant
-        # comme vérifié.
-        # Ils seront repris lors
-        # d'un prochain run.
         if payload is None:
             deferred += len(group)
 
@@ -779,6 +798,7 @@ def main():
             time.sleep(
                 REQUEST_DELAY
             )
+
             continue
 
         results = parse_results(
@@ -823,10 +843,6 @@ def main():
 
                 continue
 
-            # La requête a bien fonctionné.
-            # On note donc que ce combattant
-            # a déjà été vérifié afin de
-            # progresser dans les 4 582.
             mark_checked(
                 supabase,
                 fighter["id"],
@@ -865,6 +881,7 @@ def main():
         )
 
     print()
+
     print(
         "FightIQ Wikidata "
         "enrichment complete"
