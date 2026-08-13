@@ -2,6 +2,13 @@ name: Update FightIQ fighter data
 
 on:
   workflow_dispatch:
+    inputs:
+      run_cito:
+        description: "Actualiser les classements Cito (consomme le quota API)"
+        required: false
+        type: boolean
+        default: false
+
   schedule:
     - cron: "30 5 * * *"
 
@@ -28,6 +35,7 @@ jobs:
         run: python scripts/import_fighters.py
 
       - name: Enrich UFC rankings with Cito
+        if: ${{ github.event_name == 'schedule' || inputs.run_cito }}
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
