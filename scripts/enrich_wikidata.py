@@ -18,7 +18,7 @@ USER_AGENT = (
 )
 
 # Nombre de combattants FightIQ examinés par run
-BATCH_LIMIT = 100
+BATCH_LIMIT = 500
 
 # Nombre de noms envoyés dans une seule requête SPARQL
 SPARQL_BATCH_SIZE = 20
