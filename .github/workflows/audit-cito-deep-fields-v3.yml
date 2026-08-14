@@ -1,0 +1,29 @@
+name: V3 Deep Cito JSON Discovery
+
+on:
+  workflow_dispatch:
+
+jobs:
+  deep-cito-json-discovery:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout FightIQ
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Deep scan all Cito fighter JSON
+        env:
+          CITO_API_KEY: ${{ secrets.CITO_API_KEY }}
+        run: python scripts/audit_cito_deep_fields_v3.py
+
+      - name: Upload V3 deep field report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cito-deep-fields-v3-report
+          path: cito_deep_fields_v3_report.json
+          retention-days: 14
