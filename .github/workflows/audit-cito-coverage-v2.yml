@@ -1,0 +1,36 @@
+name: V2 Audit Cito Full Coverage
+
+on:
+  workflow_dispatch:
+
+jobs:
+  audit-cito-full-coverage:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout FightIQ
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+          pip install requests
+
+      - name: Audit all Cito fighters in one call
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          CITO_API_KEY: ${{ secrets.CITO_API_KEY }}
+        run: python scripts/audit_cito_coverage_v2.py
+
+      - name: Upload V2 audit report
+        uses: actions/upload-artifact@v4
+        with:
+          name: cito-coverage-v2-report
+          path: cito_coverage_v2_report.json
+          retention-days: 14
