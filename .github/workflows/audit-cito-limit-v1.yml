@@ -1,0 +1,25 @@
+name: V1 Audit Cito Limit
+
+on:
+  workflow_dispatch:
+
+jobs:
+  audit-cito-limit:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout FightIQ
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install requests
+        run: pip install requests
+
+      - name: Test Cito fighters limit V1
+        env:
+          CITO_API_KEY: ${{ secrets.CITO_API_KEY }}
+        run: python scripts/audit_cito_limit_v1.py
