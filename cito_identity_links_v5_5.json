@@ -1,0 +1,1674 @@
+{
+  "links": [
+    {
+      "cito_id": "8962499a-e61e-413b-9514-7561fe718265",
+      "cito_name": "Kimbo Slice",
+      "ufcstats_id": "27541033b97c076d",
+      "ufcstats_name": "Kevin Ferguson",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "cc11ae04-67dd-4f52-9a7c-b7f25dd6d856",
+      "cito_name": "Max Grishin",
+      "ufcstats_id": "950d0ef5c17157c5",
+      "ufcstats_name": "Maxim Grishin",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "361b1655-4430-4897-84c7-8bfdd87e0bfa",
+      "cito_name": "Alexandra Albu",
+      "ufcstats_id": "e76d9f656ceb82ab",
+      "ufcstats_name": "Aleksandra Albu",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "5deaba57-cfe9-4c85-bb85-44bf25190e34",
+      "cito_name": "Rob Whiteford",
+      "ufcstats_id": "1dafccb62a0f98ec",
+      "ufcstats_name": "Robert Whiteford",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "d7d6b621-9c74-4141-8a15-bdcc65cfd738",
+      "cito_name": "Robbie Peralta",
+      "ufcstats_id": "960d6cae8879ba2b",
+      "ufcstats_name": "Robert Peralta",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "b1fa2e62-35e4-4881-a69f-ac1be509920a",
+      "cito_name": "Manny Gamburyan",
+      "ufcstats_id": "cc6f9d1e89f3449a",
+      "ufcstats_name": "Manvel Gamburyan",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "dd8709e5-b8b8-484b-99fd-ad945eb8654c",
+      "cito_name": "Ulka Sasaki",
+      "ufcstats_id": "7c3c48cf54a2848e",
+      "ufcstats_name": "Yuta Sasaki",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "da9a144c-24c0-49a5-a7b6-3bfc0d0d62ab",
+      "cito_name": "Dan Downes",
+      "ufcstats_id": "a66395395b5f1394",
+      "ufcstats_name": "Danny Downes",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "f497e6f1-d725-4ff8-99d7-6ce91050824e",
+      "cito_name": "Cris Cyborg",
+      "ufcstats_id": "634bb0de2eb043b4",
+      "ufcstats_name": "Cristiane Justino",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "2ce2bdd4-7461-43db-9378-7b2c1fb64f27",
+      "cito_name": "Mirko Cro Cop",
+      "ufcstats_id": "c32fb8c0f6471a4d",
+      "ufcstats_name": "Mirko Filipovic",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "c1948bf7-8a30-48a7-953a-dc16deb6f579",
+      "cito_name": "Kevin Souza",
+      "ufcstats_id": "6c7020b859c7a3ce",
+      "ufcstats_name": "Edimilson Souza",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "0064116e-ab52-401b-8cae-6fccfd6a4103",
+      "cito_name": "Miguel Angel Torres",
+      "ufcstats_id": "33b2f68ef95252e0",
+      "ufcstats_name": "Miguel Torres",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "8e6b9782-cd2e-4587-a9f2-3631562aeb32",
+      "cito_name": "Minotauro Nogueira",
+      "ufcstats_id": "ee9d73f4fee9cbdd",
+      "ufcstats_name": "Antonio Rodrigo Nogueira",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "6cda1dd8-48c9-4d2e-a272-0bf0a97db308",
+      "cito_name": "Tiago Trator",
+      "ufcstats_id": "8ce87f7e3a9baed2",
+      "ufcstats_name": "Tiago dos Santos e Silva",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "fb88af9c-f9eb-4764-877a-b4bd2e439e4b",
+      "cito_name": "Wendell Oliveira",
+      "ufcstats_id": "32c03df3c9760069",
+      "ufcstats_name": "Wendell Oliveira Marques",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "18b74289-a1c4-47b2-908b-dd53bdbeb363",
+      "cito_name": "Emily Peters Kagan",
+      "ufcstats_id": "c1ea9d56cd953586",
+      "ufcstats_name": "Emily Kagan",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "4ed4ca69-8ae2-4edd-8b9d-eb8d555c99c9",
+      "cito_name": "Zu Anyanwu",
+      "ufcstats_id": "78d48d3874dacafd",
+      "ufcstats_name": "Azunna Anyanwu",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "1667e6b3-d042-41f3-a3c3-c8be0363f2da",
+      "cito_name": "Nariman Abbassov",
+      "ufcstats_id": "59a9d6dac61c2540",
+      "ufcstats_name": "Nariman Abbasov",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "6b86966c-3c64-4f16-aaeb-9cf35fe55245",
+      "cito_name": "Tank Abbott",
+      "ufcstats_id": "b361180739bed4b0",
+      "ufcstats_name": "David Abbott",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "cb25b033-145e-4137-bb26-8edce8cea552",
+      "cito_name": "Rampage Jackson",
+      "ufcstats_id": "ffc088e64fab57e9",
+      "ufcstats_name": "Quinton Jackson",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "a6c60de5-be21-4275-a5c5-b57d5c9181d2",
+      "cito_name": "Yuri Alcantara",
+      "ufcstats_id": "2f95a3c6d58b2aad",
+      "ufcstats_name": "Iuri Alcantara",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "a281365b-ebad-4065-a4b5-c155e7b519c0",
+      "cito_name": "Daniel Bobish",
+      "ufcstats_id": "f348d05403fad037",
+      "ufcstats_name": "Dan Bobish",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "6889bea3-3d32-4c22-8cb0-12f0f9f5d99b",
+      "cito_name": "Bruno Silva",
+      "ufcstats_id": "294aa73dbf37d281",
+      "ufcstats_name": "Bruno Silva",
+      "resolution_reason": "v5_4_high_confidence"
+    },
+    {
+      "cito_id": "41fab60f-922c-4c06-95b9-569076e39d15",
+      "cito_name": "Damir Hadžović",
+      "ufcstats_id": "38c626ca912c7bac",
+      "ufcstats_name": "Damir Hadzovic",
+      "resolution_reason": "v5_4_high_confidence"
+    },
+    {
+      "cito_id": "3e5a7339-e5b5-4f85-a12b-1d978856bb1f",
+      "cito_name": "Jose Delgado",
+      "ufcstats_id": "7d6ceff6747f2de2",
+      "ufcstats_name": "Jose Delgado",
+      "resolution_reason": "v5_4_high_confidence"
+    },
+    {
+      "cito_id": "80f81375-a085-4cd6-87d9-cc7c5801faa0",
+      "cito_name": "Yan Xiaonan",
+      "ufcstats_id": "c41d426cc7326d1b",
+      "ufcstats_name": "Yan Xiaonan",
+      "resolution_reason": "v5_4_high_confidence"
+    },
+    {
+      "cito_id": "920aa61c-376a-4a87-b535-818da7511c66",
+      "cito_name": "Zach Reese",
+      "ufcstats_id": "23dec7c47cb418f8",
+      "ufcstats_name": "Zach Reese",
+      "resolution_reason": "v5_4_high_confidence"
+    },
+    {
+      "cito_id": "dfbaf1ab-5494-4146-9c9b-ae93bb4e7b5b",
+      "cito_name": "José Montanha",
+      "ufcstats_id": "1f8cd7634e8286ff",
+      "ufcstats_name": "Jose Montanha",
+      "resolution_reason": "v5_4_high_confidence"
+    },
+    {
+      "cito_id": "0b4deda0-f13c-4069-b285-5a85565ef86f",
+      "cito_name": "Muhammad Saidov",
+      "ufcstats_id": "b01a5e0dcd9f231d",
+      "ufcstats_name": "Muhammad Saidov",
+      "resolution_reason": "v5_4_high_confidence"
+    },
+    {
+      "cito_id": "91d3d384-c016-4977-b636-5e5f40e7490a",
+      "cito_name": "Daniel Barez",
+      "ufcstats_id": "e8fe9c15d348e778",
+      "ufcstats_name": "Daniel Barez",
+      "resolution_reason": "v5_4_high_confidence"
+    },
+    {
+      "cito_id": "751809b0-8fde-4d5c-9f7e-f888557b2bdc",
+      "cito_name": "Roberto Sanchez",
+      "ufcstats_id": "546f8599a63c29da",
+      "ufcstats_name": "Robert Sanchez",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "a9de92d4-169d-4db6-a432-bed4ea879156",
+      "cito_name": "Ezra Elliot",
+      "ufcstats_id": "b852ad2b35354fcb",
+      "ufcstats_name": "Ezra Elliott",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "19b92113-0f97-46f8-982e-17c85840680e",
+      "cito_name": "Lukasz Sudolski",
+      "ufcstats_id": "b160e4f251283d70",
+      "ufcstats_name": "Lucasz Sudolski",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "f8a8a39b-b2c5-43e6-9a0f-b1ba541d0bcc",
+      "cito_name": "Joshua Stansbury",
+      "ufcstats_id": "30ea504870f8597b",
+      "ufcstats_name": "Josh Stansbury",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "1b92980b-76c3-4516-8c1a-5ac71a836fd0",
+      "cito_name": "Geraldo de Freitas Jr.",
+      "ufcstats_id": "9cfbfae5fa1fdd93",
+      "ufcstats_name": "Geraldo de Freitas",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "e01d439e-f9f7-43d1-9c92-6c8161fb07d5",
+      "cito_name": "Benny Alloway",
+      "ufcstats_id": "c4fe2e9a06ea5bcb",
+      "ufcstats_name": "Ben Alloway",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "ca5eda1d-de08-4303-bfd7-4b1d565cf6e5",
+      "cito_name": "Carlo Pedersoli",
+      "ufcstats_id": "198994b47f395af0",
+      "ufcstats_name": "Carlo Pedersoli Jr.",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "2f6c8a13-1449-468e-82f6-0fa67c606555",
+      "cito_name": "John-Olav Einemo",
+      "ufcstats_id": "0577808d22dfe79c",
+      "ufcstats_name": "Jon Olav Einemo",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "af10cd00-84f1-4c52-be65-ffddaa194477",
+      "cito_name": "Ryan McGilivray",
+      "ufcstats_id": "1f9c371c93dfd3a9",
+      "ufcstats_name": "Ryan McGillivray",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "2e71f898-4383-43f2-a4a0-ba4517ecd1b8",
+      "cito_name": "Tsuyoshi Kosaka",
+      "ufcstats_id": "b76ed59283d3559c",
+      "ufcstats_name": "Tsuyoshi Kohsaka",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "7dc973f2-3f92-4bf7-b2b0-10a8cdb5a2ff",
+      "cito_name": "Josh Schockman",
+      "ufcstats_id": "821cd80aab70d5f9",
+      "ufcstats_name": "Josh Shockman",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "9b25f0ba-7832-4d1c-af77-d26fcfcac706",
+      "cito_name": "Rick Palacios",
+      "ufcstats_id": "797ddccda75f169f",
+      "ufcstats_name": "Ricky Palacios",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "274ac10e-b1eb-49e3-86fa-cb473e0a51bc",
+      "cito_name": "Steven Kennedy",
+      "ufcstats_id": "185fb0200a4605e6",
+      "ufcstats_name": "Steve Kennedy",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "23b0790d-51c0-419a-8616-75897ed4b3f8",
+      "cito_name": "Josh Raferty",
+      "ufcstats_id": "ff2c606c8bc365e3",
+      "ufcstats_name": "Josh Rafferty",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "a39312d5-6451-4de5-b7f0-f12232de921a",
+      "cito_name": "Arjan Singh Bhullar",
+      "ufcstats_id": "7e511f8d842a109d",
+      "ufcstats_name": "Arjan Bhullar",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "bdb339fa-8c17-475f-9e95-b25aa7c788cd",
+      "cito_name": "Antonio Rogerio Nogueira",
+      "ufcstats_id": "73e09f837f3b5ecc",
+      "ufcstats_name": "Rogerio Nogueira",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "39348928-2da1-4b42-8d72-9db18d81b3c4",
+      "cito_name": "Phil De Fries",
+      "ufcstats_id": "6ef65b6a152e49d5",
+      "ufcstats_name": "Philip De Fries",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "0a2da9c4-6b1f-4d68-b708-3ba4394f7ceb",
+      "cito_name": "Chris Ligouri",
+      "ufcstats_id": "0e31bfd26cc8c503",
+      "ufcstats_name": "Chris Liguori",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "2ef123c8-acb5-40d1-83bf-e06b86bea1c3",
+      "cito_name": "Jimmy Wallhead",
+      "ufcstats_id": "0c670b443c3d269f",
+      "ufcstats_name": "Jim Wallhead",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "84188f81-3118-4687-9c59-c1ea2fa016a6",
+      "cito_name": "Richard Crunkilton Jr.",
+      "ufcstats_id": "22ee260735da0d58",
+      "ufcstats_name": "Richard Crunkilton",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "76220128-d4c2-4397-9332-dcd523145e4d",
+      "cito_name": "Jaimee Nievera",
+      "ufcstats_id": "3edf45e1717fa764",
+      "ufcstats_name": "Jaimelene Nievera",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "cf40583b-3a7f-4a9a-b14f-e92cdb40ae2b",
+      "cito_name": "Bubba McDaniel",
+      "ufcstats_id": "5cafbc97dba2e797",
+      "ufcstats_name": "Robert McDaniel",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "dd6c450b-4a1c-4557-8470-c565e81df714",
+      "cito_name": "Christophe Midoux",
+      "ufcstats_id": "5b5b9c6f6f270369",
+      "ufcstats_name": "Kristof Midoux",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "4e35589e-6901-48a6-a72e-80d6fdb3ba33",
+      "cito_name": "Rheza Arianto",
+      "ufcstats_id": "90063913321e7670",
+      "ufcstats_name": "Reza Arianto",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "96c3c02e-d549-4a71-a66e-4b1251e0bdb7",
+      "cito_name": "Jack Nilsson",
+      "ufcstats_id": "53e533db1b8e9712",
+      "ufcstats_name": "Jack Nilson",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "e45a78de-e60d-4955-8c34-fea49589b769",
+      "cito_name": "Alessandro Ricci",
+      "ufcstats_id": "bf9bc96336922271",
+      "ufcstats_name": "Alex Ricci",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "60852d3d-6e4f-4c16-b7e3-c438a7edee3c",
+      "cito_name": "Aili Muratbek",
+      "ufcstats_id": "9b6dcc335ad03696",
+      "ufcstats_name": "Ailiya Muratbek",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "3e991bdc-0784-4495-a7e7-f25165781cde",
+      "cito_name": "Rameau Sokoudjou",
+      "ufcstats_id": "d1152823307d7e7c",
+      "ufcstats_name": "Rameau Thierry Sokoudjou",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "43340abb-da23-4a18-bbc9-4480ea904bcd",
+      "cito_name": "Jung Hyun Lee",
+      "ufcstats_id": "b6033505c245e28b",
+      "ufcstats_name": "JungHyun Lee",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "049f770f-0f96-469f-b5a7-017dc0aea2f1",
+      "cito_name": "Sang Hoon Yoo",
+      "ufcstats_id": "00b490982afd1b17",
+      "ufcstats_name": "SangHoon Yoo",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "d969c5f1-6f8b-4946-bfb6-c71079758ec0",
+      "cito_name": "Riley Dutro",
+      "ufcstats_id": "43db649da89fac4b",
+      "ufcstats_name": "Rilley Dutro",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "32b924b0-b84a-4610-b85b-d24c63b09e8a",
+      "cito_name": "Wendri Patilima",
+      "ufcstats_id": "66d42e9503fa108e",
+      "ufcstats_name": "Windri Patilima",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "65934105-da05-431d-bf7d-482c852870ce",
+      "cito_name": "Donavan Beard",
+      "ufcstats_id": "3a6ac598320ca7f2",
+      "ufcstats_name": "Donovan Beard",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "4bd5eb2e-35da-45fb-9115-6cf40b8bb242",
+      "cito_name": "KyeongPyo Kim",
+      "ufcstats_id": "5a9f7b5ffebdd6e7",
+      "ufcstats_name": "KyeungPyo Kim",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "ad5a8355-148a-471d-9939-4081b8510bbf",
+      "cito_name": "Maiara Amajanas Dos Santos",
+      "ufcstats_id": "247fbbfafea60bb1",
+      "ufcstats_name": "Maiara Amanajas dos Santos",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "d32551d6-98b3-4843-ad11-aac80fe8a47a",
+      "cito_name": "Christophe Leininger",
+      "ufcstats_id": "7269329bd87eb479",
+      "ufcstats_name": "Christophe Leninger",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "5b2af97a-c17c-4dee-8799-3c7e95ee55d9",
+      "cito_name": "Emmanuel Yarbrough",
+      "ufcstats_id": "2299605af59fd309",
+      "ufcstats_name": "Emmanuel Yarborough",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "b55c608d-0d6b-4bc4-a11e-b32eceee82fd",
+      "cito_name": "Keichiro Yamamiya",
+      "ufcstats_id": "6014d25e73b669c9",
+      "ufcstats_name": "Keiichiro Yamamiya",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "94f957f9-7d49-41cd-9394-c5e1e811b2b6",
+      "cito_name": "Dmitrei Stepanov",
+      "ufcstats_id": "738acab0c6934dd8",
+      "ufcstats_name": "Dmitri Stepanov",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "2de78a21-1601-41db-aab7-9457fc0135fa",
+      "cito_name": "William Marcario",
+      "ufcstats_id": "ed74afc8b5b47a61",
+      "ufcstats_name": "William Macario",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "98119bff-d33d-4479-85bc-ac4be980a840",
+      "cito_name": "Katsuhisa Fuji",
+      "ufcstats_id": "d71d968dc6ecfdaf",
+      "ufcstats_name": "Katsuhisa Fujii",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "cfefa2f3-b384-4e59-af7b-c74135d8d085",
+      "cito_name": "Marcello Mello",
+      "ufcstats_id": "672ef06fd9f41f7d",
+      "ufcstats_name": "Marcelo Mello",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "a2c50f20-3578-44c6-847e-ae07d85b4c30",
+      "cito_name": "Jae Hyun Park",
+      "ufcstats_id": "fe1595732dfb08fc",
+      "ufcstats_name": "JaeHyun Park",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "b050839d-4771-4eff-b91e-4466ea7d89da",
+      "cito_name": "Sang Won Kim",
+      "ufcstats_id": "e9712cad24948ce1",
+      "ufcstats_name": "SangWon Kim",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "94a3de58-25a0-48ab-8165-adb122decdd2",
+      "cito_name": "Alex Steibling",
+      "ufcstats_id": "df5a77121ba84a5d",
+      "ufcstats_name": "Alex Stiebling",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "8dfbbb6f-2656-4e10-8c29-4a86be584bf9",
+      "cito_name": "Carlos Baretto",
+      "ufcstats_id": "a220be6d41d6f97d",
+      "ufcstats_name": "Carlos Barreto",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "f72393a5-128b-44b4-9c13-79b4d74f8822",
+      "cito_name": "Sean Daughtery",
+      "ufcstats_id": "a683f9ddb70aa4bd",
+      "ufcstats_name": "Sean Daugherty",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "160ebeec-7e50-493b-801b-48add900556a",
+      "cito_name": "Scott Fielder",
+      "ufcstats_id": "0ec821423baa26bd",
+      "ufcstats_name": "Scott Fiedler",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "cd5fe98c-e442-4516-99c7-d9cf88cbe870",
+      "cito_name": "Nair Nelikyan",
+      "ufcstats_id": "64b8561624d3b15e",
+      "ufcstats_name": "Nair Melikyan",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "05f246f4-0d82-4a54-9334-1ad720fe03d3",
+      "cito_name": "Sinae Kikuta",
+      "ufcstats_id": "e4bde462b043d3e1",
+      "ufcstats_name": "Sanae Kikuta",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "6ca31271-84fc-4165-b132-cd6a418ce23a",
+      "cito_name": "Tony Peterra",
+      "ufcstats_id": "c61f66d8c3fd5f07",
+      "ufcstats_name": "Tony Petarra",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "ef37f08c-5149-4f6b-bafe-b6ed1f3aa11d",
+      "cito_name": "Orlando Welt",
+      "ufcstats_id": "a6c2f5381d575920",
+      "ufcstats_name": "Orlando Wiet",
+      "resolution_reason": "orthographic_variant"
+    },
+    {
+      "cito_id": "17aa9906-e052-4f4f-8121-f2dd583f59b1",
+      "cito_name": "Joe Moriera",
+      "ufcstats_id": "df85d6ec3493d120",
+      "ufcstats_name": "Joe Moreira",
+      "resolution_reason": "validated_alias"
+    },
+    {
+      "cito_id": "be133b49-eebd-496d-b794-eb139bb50a7c",
+      "cito_name": "Reza Nazri",
+      "ufcstats_id": "d41937647eae9a34",
+      "ufcstats_name": "Reza Nasri",
+      "resolution_reason": "orthographic_variant"
+    }
+  ],
+  "classifications": [
+    {
+      "cito_id": "8962499a-e61e-413b-9514-7561fe718265",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "27541033b97c076d"
+    },
+    {
+      "cito_id": "cc11ae04-67dd-4f52-9a7c-b7f25dd6d856",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "950d0ef5c17157c5"
+    },
+    {
+      "cito_id": "361b1655-4430-4897-84c7-8bfdd87e0bfa",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "e76d9f656ceb82ab"
+    },
+    {
+      "cito_id": "5deaba57-cfe9-4c85-bb85-44bf25190e34",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "1dafccb62a0f98ec"
+    },
+    {
+      "cito_id": "d7d6b621-9c74-4141-8a15-bdcc65cfd738",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "960d6cae8879ba2b"
+    },
+    {
+      "cito_id": "b1fa2e62-35e4-4881-a69f-ac1be509920a",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "cc6f9d1e89f3449a"
+    },
+    {
+      "cito_id": "dd8709e5-b8b8-484b-99fd-ad945eb8654c",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "7c3c48cf54a2848e"
+    },
+    {
+      "cito_id": "da9a144c-24c0-49a5-a7b6-3bfc0d0d62ab",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "a66395395b5f1394"
+    },
+    {
+      "cito_id": "f497e6f1-d725-4ff8-99d7-6ce91050824e",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "634bb0de2eb043b4"
+    },
+    {
+      "cito_id": "2ce2bdd4-7461-43db-9378-7b2c1fb64f27",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "c32fb8c0f6471a4d"
+    },
+    {
+      "cito_id": "c1948bf7-8a30-48a7-953a-dc16deb6f579",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "6c7020b859c7a3ce"
+    },
+    {
+      "cito_id": "0064116e-ab52-401b-8cae-6fccfd6a4103",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "33b2f68ef95252e0"
+    },
+    {
+      "cito_id": "8e6b9782-cd2e-4587-a9f2-3631562aeb32",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "ee9d73f4fee9cbdd"
+    },
+    {
+      "cito_id": "6cda1dd8-48c9-4d2e-a272-0bf0a97db308",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "8ce87f7e3a9baed2"
+    },
+    {
+      "cito_id": "fb88af9c-f9eb-4764-877a-b4bd2e439e4b",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "32c03df3c9760069"
+    },
+    {
+      "cito_id": "18b74289-a1c4-47b2-908b-dd53bdbeb363",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "c1ea9d56cd953586"
+    },
+    {
+      "cito_id": "4ed4ca69-8ae2-4edd-8b9d-eb8d555c99c9",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "78d48d3874dacafd"
+    },
+    {
+      "cito_id": "1667e6b3-d042-41f3-a3c3-c8be0363f2da",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "59a9d6dac61c2540"
+    },
+    {
+      "cito_id": "6b86966c-3c64-4f16-aaeb-9cf35fe55245",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "b361180739bed4b0"
+    },
+    {
+      "cito_id": "cb25b033-145e-4137-bb26-8edce8cea552",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "ffc088e64fab57e9"
+    },
+    {
+      "cito_id": "a6c60de5-be21-4275-a5c5-b57d5c9181d2",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "2f95a3c6d58b2aad"
+    },
+    {
+      "cito_id": "a281365b-ebad-4065-a4b5-c155e7b519c0",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "f348d05403fad037"
+    },
+    {
+      "cito_id": "6889bea3-3d32-4c22-8cb0-12f0f9f5d99b",
+      "status": "matched",
+      "reason": "v5_4_high_confidence",
+      "ufcstats_id": "294aa73dbf37d281"
+    },
+    {
+      "cito_id": "41fab60f-922c-4c06-95b9-569076e39d15",
+      "status": "matched",
+      "reason": "v5_4_high_confidence",
+      "ufcstats_id": "38c626ca912c7bac"
+    },
+    {
+      "cito_id": "3e5a7339-e5b5-4f85-a12b-1d978856bb1f",
+      "status": "matched",
+      "reason": "v5_4_high_confidence",
+      "ufcstats_id": "7d6ceff6747f2de2"
+    },
+    {
+      "cito_id": "80f81375-a085-4cd6-87d9-cc7c5801faa0",
+      "status": "matched",
+      "reason": "v5_4_high_confidence",
+      "ufcstats_id": "c41d426cc7326d1b"
+    },
+    {
+      "cito_id": "920aa61c-376a-4a87-b535-818da7511c66",
+      "status": "matched",
+      "reason": "v5_4_high_confidence",
+      "ufcstats_id": "23dec7c47cb418f8"
+    },
+    {
+      "cito_id": "dfbaf1ab-5494-4146-9c9b-ae93bb4e7b5b",
+      "status": "matched",
+      "reason": "v5_4_high_confidence",
+      "ufcstats_id": "1f8cd7634e8286ff"
+    },
+    {
+      "cito_id": "0b4deda0-f13c-4069-b285-5a85565ef86f",
+      "status": "matched",
+      "reason": "v5_4_high_confidence",
+      "ufcstats_id": "b01a5e0dcd9f231d"
+    },
+    {
+      "cito_id": "91d3d384-c016-4977-b636-5e5f40e7490a",
+      "status": "matched",
+      "reason": "v5_4_high_confidence",
+      "ufcstats_id": "e8fe9c15d348e778"
+    },
+    {
+      "cito_id": "751809b0-8fde-4d5c-9f7e-f888557b2bdc",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "546f8599a63c29da"
+    },
+    {
+      "cito_id": "a9de92d4-169d-4db6-a432-bed4ea879156",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "b852ad2b35354fcb"
+    },
+    {
+      "cito_id": "19b92113-0f97-46f8-982e-17c85840680e",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "b160e4f251283d70"
+    },
+    {
+      "cito_id": "f8a8a39b-b2c5-43e6-9a0f-b1ba541d0bcc",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "30ea504870f8597b"
+    },
+    {
+      "cito_id": "1b92980b-76c3-4516-8c1a-5ac71a836fd0",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "9cfbfae5fa1fdd93"
+    },
+    {
+      "cito_id": "e01d439e-f9f7-43d1-9c92-6c8161fb07d5",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "c4fe2e9a06ea5bcb"
+    },
+    {
+      "cito_id": "ca5eda1d-de08-4303-bfd7-4b1d565cf6e5",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "198994b47f395af0"
+    },
+    {
+      "cito_id": "058cd08b-af01-4384-be0e-7a5702ca782d",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "e4d9a9cd-a4c0-4b90-b1e0-d6e4aded3ef0",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "1f33e1d3-a78b-4887-8273-439a51fc5338",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "92076b9b-b8f2-4a87-ab3a-d7372ea6f5b7",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "a8217e1d-fff5-4fd2-a9e4-2e4630397c63",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "6e9f49e1-084e-4922-9c52-47281e6a7b96",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "4b6599c5-c6ba-4b0a-b281-e43484166920",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "0cb4f76f-3110-4db8-a3f5-40b783c1f61e",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "2f6c8a13-1449-468e-82f6-0fa67c606555",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "0577808d22dfe79c"
+    },
+    {
+      "cito_id": "af10cd00-84f1-4c52-be65-ffddaa194477",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "1f9c371c93dfd3a9"
+    },
+    {
+      "cito_id": "2e71f898-4383-43f2-a4a0-ba4517ecd1b8",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "b76ed59283d3559c"
+    },
+    {
+      "cito_id": "7dc973f2-3f92-4bf7-b2b0-10a8cdb5a2ff",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "821cd80aab70d5f9"
+    },
+    {
+      "cito_id": "9b25f0ba-7832-4d1c-af77-d26fcfcac706",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "797ddccda75f169f"
+    },
+    {
+      "cito_id": "274ac10e-b1eb-49e3-86fa-cb473e0a51bc",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "185fb0200a4605e6"
+    },
+    {
+      "cito_id": "23b0790d-51c0-419a-8616-75897ed4b3f8",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "ff2c606c8bc365e3"
+    },
+    {
+      "cito_id": "c1d63bbe-ec31-44fb-bb5c-a074a860cadf",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "5325bd33-b8c6-4421-a002-2404dfec5493",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "a39312d5-6451-4de5-b7f0-f12232de921a",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "7e511f8d842a109d"
+    },
+    {
+      "cito_id": "bdb339fa-8c17-475f-9e95-b25aa7c788cd",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "73e09f837f3b5ecc"
+    },
+    {
+      "cito_id": "39348928-2da1-4b42-8d72-9db18d81b3c4",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "6ef65b6a152e49d5"
+    },
+    {
+      "cito_id": "0a2da9c4-6b1f-4d68-b708-3ba4394f7ceb",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "0e31bfd26cc8c503"
+    },
+    {
+      "cito_id": "2ef123c8-acb5-40d1-83bf-e06b86bea1c3",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "0c670b443c3d269f"
+    },
+    {
+      "cito_id": "84188f81-3118-4687-9c59-c1ea2fa016a6",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "22ee260735da0d58"
+    },
+    {
+      "cito_id": "3d7e40cc-2b9e-4fae-87ab-97a49a29380d",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "76220128-d4c2-4397-9332-dcd523145e4d",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "3edf45e1717fa764"
+    },
+    {
+      "cito_id": "82a345e0-7a2a-4455-9ec0-038e871431d6",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "b5b759ad-1c94-43f7-90cc-7ea90edbecf1",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "dc963ddc-ada1-4c66-bd47-ffe0e50122f2",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "2f5a3b74-6d6e-4697-aa55-419963fa51f9",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "4c1942f6-2617-4abb-9790-172800afae3b",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "56278aa7-6bf4-4b5e-904d-9e213bf13736",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "53da33ea-1c2d-46e2-b63b-e330587d822d",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "7a929b1e-0cc2-4f2b-915d-cba171aa3e2d",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "8de188e1-1ea0-4bcc-824a-b94717082ee6",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "cf40583b-3a7f-4a9a-b14f-e92cdb40ae2b",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "5cafbc97dba2e797"
+    },
+    {
+      "cito_id": "5588383b-8f13-4d4d-a461-ec0310c7030a",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "793d36a9-9973-4ccd-a18b-5399f97d3dca",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "7342391b-e482-4982-acc7-84b566385901",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "561c5613-d029-499f-b34f-b5a6b18c7b2f",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "dd6c450b-4a1c-4557-8470-c565e81df714",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "5b5b9c6f6f270369"
+    },
+    {
+      "cito_id": "d680fb0b-258b-4a5b-aacb-53176e51956b",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "d6fcc83b-e7f6-4d0e-836e-166963e43367",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "ac4dbdfb-1c10-4417-8943-5587295a48b0",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "63914101-8507-4477-9f6e-765834cd77e8",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "4c4e4958-b54f-4ceb-bf84-9b6550eb0e01",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "f8dd784b-8851-46c6-9dcb-3a4d021f9770",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "4e35589e-6901-48a6-a72e-80d6fdb3ba33",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "90063913321e7670"
+    },
+    {
+      "cito_id": "96c3c02e-d549-4a71-a66e-4b1251e0bdb7",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "53e533db1b8e9712"
+    },
+    {
+      "cito_id": "8e27893c-153d-4f73-b80e-e01fd6aa4d58",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "e45a78de-e60d-4955-8c34-fea49589b769",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "bf9bc96336922271"
+    },
+    {
+      "cito_id": "04f9552c-47fa-40c6-9612-0f7fdf736e1d",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "60852d3d-6e4f-4c16-b7e3-c438a7edee3c",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "9b6dcc335ad03696"
+    },
+    {
+      "cito_id": "b3a09881-bdbb-4858-853b-092d726e227f",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "eb27234f-34fd-40f0-b03f-8a7351b2b8ee",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "3e991bdc-0784-4495-a7e7-f25165781cde",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "d1152823307d7e7c"
+    },
+    {
+      "cito_id": "3a1e3a3e-be68-4265-b7b0-d4974cac4c5c",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "43340abb-da23-4a18-bbc9-4480ea904bcd",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "b6033505c245e28b"
+    },
+    {
+      "cito_id": "049f770f-0f96-469f-b5a7-017dc0aea2f1",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "00b490982afd1b17"
+    },
+    {
+      "cito_id": "d969c5f1-6f8b-4946-bfb6-c71079758ec0",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "43db649da89fac4b"
+    },
+    {
+      "cito_id": "fb5b065e-9f79-411c-b8f2-864f26d9a620",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "6c86361a-cf66-4e2a-8b46-6b9796e90ac4",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "32b924b0-b84a-4610-b85b-d24c63b09e8a",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "66d42e9503fa108e"
+    },
+    {
+      "cito_id": "65934105-da05-431d-bf7d-482c852870ce",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "3a6ac598320ca7f2"
+    },
+    {
+      "cito_id": "4bd5eb2e-35da-45fb-9115-6cf40b8bb242",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "5a9f7b5ffebdd6e7"
+    },
+    {
+      "cito_id": "ad5a8355-148a-471d-9939-4081b8510bbf",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "247fbbfafea60bb1"
+    },
+    {
+      "cito_id": "fdf62418-a94d-4a32-b843-34fe6b5102c5",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "7529ea3d-8351-4c43-bfa4-5c830626a6a2",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "d32551d6-98b3-4843-ad11-aac80fe8a47a",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "7269329bd87eb479"
+    },
+    {
+      "cito_id": "5b2af97a-c17c-4dee-8799-3c7e95ee55d9",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "2299605af59fd309"
+    },
+    {
+      "cito_id": "f1ed0184-9780-4c1f-a744-6003295eb1b4",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "5724c136-b89a-45ba-8fd6-40e6e4d45fd8",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "b55c608d-0d6b-4bc4-a11e-b32eceee82fd",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "6014d25e73b669c9"
+    },
+    {
+      "cito_id": "94f957f9-7d49-41cd-9394-c5e1e811b2b6",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "738acab0c6934dd8"
+    },
+    {
+      "cito_id": "2de78a21-1601-41db-aab7-9457fc0135fa",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "ed74afc8b5b47a61"
+    },
+    {
+      "cito_id": "aff40736-0b7a-4b6a-afc4-b817e582d374",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "98119bff-d33d-4479-85bc-ac4be980a840",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "d71d968dc6ecfdaf"
+    },
+    {
+      "cito_id": "acac9845-43f8-4c17-b0f3-1499d5848016",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "cfefa2f3-b384-4e59-af7b-c74135d8d085",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "672ef06fd9f41f7d"
+    },
+    {
+      "cito_id": "a2c50f20-3578-44c6-847e-ae07d85b4c30",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "fe1595732dfb08fc"
+    },
+    {
+      "cito_id": "b050839d-4771-4eff-b91e-4466ea7d89da",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "e9712cad24948ce1"
+    },
+    {
+      "cito_id": "90d26d40-9824-42cf-8ca3-5ea9483f3295",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "94a3de58-25a0-48ab-8165-adb122decdd2",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "df5a77121ba84a5d"
+    },
+    {
+      "cito_id": "8dfbbb6f-2656-4e10-8c29-4a86be584bf9",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "a220be6d41d6f97d"
+    },
+    {
+      "cito_id": "f72393a5-128b-44b4-9c13-79b4d74f8822",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "a683f9ddb70aa4bd"
+    },
+    {
+      "cito_id": "160ebeec-7e50-493b-801b-48add900556a",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "0ec821423baa26bd"
+    },
+    {
+      "cito_id": "cd5fe98c-e442-4516-99c7-d9cf88cbe870",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "64b8561624d3b15e"
+    },
+    {
+      "cito_id": "f8dc0b3e-6d62-41f9-bbd7-dcb9938b7019",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "05f246f4-0d82-4a54-9334-1ad720fe03d3",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "e4bde462b043d3e1"
+    },
+    {
+      "cito_id": "6ca31271-84fc-4165-b132-cd6a418ce23a",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "c61f66d8c3fd5f07"
+    },
+    {
+      "cito_id": "ef37f08c-5149-4f6b-bafe-b6ed1f3aa11d",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "a6c2f5381d575920"
+    },
+    {
+      "cito_id": "17aa9906-e052-4f4f-8121-f2dd583f59b1",
+      "status": "matched",
+      "reason": "validated_alias",
+      "ufcstats_id": "df85d6ec3493d120"
+    },
+    {
+      "cito_id": "34dc79dd-b469-451c-ab34-8571f532784e",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "f12ecfe5-d837-4f1e-8924-fd2b92a9f241",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "be133b49-eebd-496d-b794-eb139bb50a7c",
+      "status": "matched",
+      "reason": "orthographic_variant",
+      "ufcstats_id": "d41937647eae9a34"
+    },
+    {
+      "cito_id": "69eb0fc3-6de0-4380-aa9e-6e9d9f94b41b",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "8f3d1ada-5a7d-46a4-823e-05d660b4943c",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "aa669c8a-7954-40ce-a7ca-fda9a968bfec",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "7d8fa8b4-8846-405b-870d-9cee5e39d83b",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "9e55d6d1-1a51-498b-bd4d-2404dbb9c140",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "42e084b8-c69f-421b-9f00-5986121e5780",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "b615aefc-24de-49eb-8d2c-2bca0919087b",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "e82692d7-3eae-47f6-be8c-70c83c80c7d2",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "a0a2b00a-1b96-4d81-8dbb-87cf8fcfa5c6",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "661d4365-1f6e-4404-a386-c1ff502b9508",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "ca95991f-8ba5-45aa-8fba-2dd0623a32a6",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "fe05a79b-9b9d-46b8-8b70-408e389ceb30",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "c354e8b3-a769-4a66-beeb-66bd0944f4b8",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "2c3341d2-7c6a-48bd-a6fa-1ae18fe27cd1",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "c32cd9a1-1460-4d2a-ac98-e884719ba6ed",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "8cd096dc-3b18-4360-813a-15ebf6afac71",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "a0862e5f-b58f-4362-8d14-000a04368876",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "459cae88-1acd-48b3-b38b-a8b7d5a04039",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "7a996cfa-9ef9-4593-ad5b-a9730afdf4a5",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "5e17ef2e-8e17-45e8-b494-f8b6b401fb2e",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "7231bc72-076a-4af0-87fd-1da2b0aea13e",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "4359f31d-437c-467d-8b55-c7dd6b99ef62",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "3d8997b0-5df3-4620-8ce1-f47f1dcbf06a",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "33650d3b-b60c-4a06-8b4d-37768bf75948",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "ba5f3f2a-6ef8-4e41-9cdc-7852fdd4e817",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "55a7d6f2-6ebc-40b2-8190-ccf30dd52103",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "645c9012-7e91-42a9-a534-a30e0b165b26",
+      "status": "placeholder",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "48ccc2e2-7e47-4e1e-b9ec-8d1d0d857ffa",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "20eb2a75-1427-4b15-8df1-4ecbb67493a8",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "ecaa5196-cf4b-4226-9ce7-459060ef4b40",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "c9c8d528-5430-4439-bd17-08011fc6dd79",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "a47d85af-dcf3-4a92-a1a7-ca88dc4a61c2",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "a41fb40f-a396-4962-8f71-ea0cf257c326",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "7c2854af-be31-47b6-ac4c-21f1c4527f83",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "257ca834-073c-4d5d-97b0-0b95b7da3ec7",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "27dac89a-16e0-42a1-81b8-a7cc5f674fbd",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "12718617-c577-4f89-8471-4412cc72a14e",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "e4655349-afee-4740-912d-177e605e38ef",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "86a9d03e-a0fb-4e02-a0e3-e0c7568c1a4e",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "146a7963-2d39-44d3-8118-c58a5e53617a",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "319bb1ff-6efe-4d69-bef2-30ea3d8222c3",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "589ac933-c2bc-4a00-9a08-3758d7308b74",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "e291f519-87f0-486f-b4f6-bf047b0b23a7",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "36ac0e4d-b896-43aa-aa5f-a7be0707b94c",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "347575f2-889e-4b2f-a785-b3166cf2ac1a",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "9b52447b-73d3-4499-9886-8e79747dde0c",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "164069c3-b6e3-4156-97df-0db4f4e397ea",
+      "status": "cito_only_unlinked",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "3838772a-e4f0-4474-88ef-38c618a5d428",
+      "status": "placeholder",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    },
+    {
+      "cito_id": "87b288cb-5fe1-497d-89d4-2ebf9f258aa1",
+      "status": "placeholder",
+      "reason": "no_safe_ufcstats_link_after_v5_4",
+      "ufcstats_id": null
+    }
+  ]
+}
