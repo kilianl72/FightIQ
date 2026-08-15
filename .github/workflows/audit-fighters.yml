@@ -1,0 +1,26 @@
+name: Audit fighters database
+
+on:
+  workflow_dispatch:
+
+jobs:
+  audit-fighters:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout FightIQ
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run final fighter audit
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+        run: python scripts/audit_fighters_v1.py
