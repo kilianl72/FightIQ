@@ -1,10 +1,10 @@
-name: V2 Update FightIQ fighter data
+name: V5 Update FightIQ fighter data
 
 on:
   workflow_dispatch:
     inputs:
       run_cito:
-        description: "Actualiser les classements Cito (consomme le quota API)"
+        description: "Actualiser les données Cito (profils + stats + rankings)"
         required: false
         type: boolean
         default: false
@@ -33,6 +33,14 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
         run: python scripts/import_fighters.py
+
+      - name: Enrich fighter profiles and stats with Cito
+        if: ${{ github.event_name == 'schedule' || inputs.run_cito }}
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          CITO_API_KEY: ${{ secrets.CITO_API_KEY }}
+        run: python scripts/enrich_fighters_cito_v5.py
 
       - name: Enrich UFC rankings with Cito
         if: ${{ github.event_name == 'schedule' || inputs.run_cito }}
