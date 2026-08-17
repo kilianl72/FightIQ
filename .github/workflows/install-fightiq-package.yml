@@ -19,7 +19,7 @@ jobs:
           test -f FightIQ_sauvegarde_complete_identite_unifiee_2026-08-17.zip
           unzip -t FightIQ_sauvegarde_complete_identite_unifiee_2026-08-17.zip
 
-      - name: Extract package at repository root
+      - name: Extract package
         run: |
           unzip -o FightIQ_sauvegarde_complete_identite_unifiee_2026-08-17.zip -d .
 
@@ -27,9 +27,9 @@ jobs:
         run: |
           test -f scripts/sync_fighters.py
           test -f scripts/enrich_rankings_cito.py
-          test -f .github/workflows/update-fighters.yml
-          test -f .github/workflows/update-rankings.yml
           test -f data/cito_identity_resolution_v5_6.json
+          test -f tests/test_sync_fighters.py
+          test -f supabase/migrations/202608170001_fighter_identity_admin_review.sql
 
       - name: Run FightIQ tests
         run: |
@@ -38,10 +38,12 @@ jobs:
             scripts/sync_fighters.py \
             scripts/enrich_rankings_cito.py
 
-      - name: Commit installed package
+      - name: Prepare safe GitHub commit
         run: |
           rm -f FightIQ_sauvegarde_complete_identite_unifiee_2026-08-17.zip
-          rm -f .github/workflows/install-fightiq-package.yml
+
+          git restore --source=HEAD -- .github/workflows/update-fighters.yml
+          rm -f .github/workflows/update-rankings.yml
 
           git config user.name "FightIQ Automation"
           git config user.email "actions@users.noreply.github.com"
