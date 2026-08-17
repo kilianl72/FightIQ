@@ -1,4 +1,4 @@
-name: Install FightIQ unified package
+name: Apply FightIQ Cito-only safety fix
 
 on:
   workflow_dispatch:
@@ -7,53 +7,299 @@ permissions:
   contents: write
 
 jobs:
-  install-package:
+  apply-fix:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout FightIQ
         uses: actions/checkout@v4
 
-      - name: Verify ZIP
+      - name: Apply verified fighter identity safety patch
         run: |
-          test -f FightIQ_sauvegarde_complete_identite_unifiee_2026-08-17.zip
-          unzip -t FightIQ_sauvegarde_complete_identite_unifiee_2026-08-17.zip
+          if grep -q "admin_create_required" scripts/sync_fighters.py; then
+            echo "La correction est déjà appliquée."
+          else
+            git apply <<'PATCH'
+          diff --git a/data/cito_identity_overrides.json b/data/cito_identity_overrides.json
+          index 1c69032..e1c4e9e 100644
+          --- a/data/cito_identity_overrides.json
+          +++ b/data/cito_identity_overrides.json
+          @@ -1,7 +1,20 @@
+           {
+             "version": "1.0",
+             "description": "Décisions manuelles prises après la consolidation V5.6. Ce fichier est lu après le registre historique et a donc priorité.",
+          -  "links": [],
+          +  "links": [
+          +    {
+          +      "cito_id": "c1a9d4cf-506b-46c1-9ae6-a82908906cec",
+          +      "cito_name": "Adrián Luna Martinetti",
+          +      "ufcstats_id": "e3b30b573e7f0d19",
+          +      "ufcstats_name": "Adrian Luna Martinetti",
+          +      "resolution_reason": "verified_ufcstats_identity_after_cito_profile_removed",
+          +      "evidence": {
+          +        "date_of_birth": "1995-08-20",
+          +        "ufcstats_url": "http://ufcstats.com/fighter-details/e3b30b573e7f0d19",
+          +        "official_ufc_url": "https://www.ufc.com/athlete/juan-martinetti"
+          +      }
+          +    }
+          +  ],
+             "creates": [],
+             "exclusions": []
+           }
+          diff --git a/scripts/sync_fighters.py b/scripts/sync_fighters.py
+          index 5b36fba..3a59ff2 100644
+          --- a/scripts/sync_fighters.py
+          +++ b/scripts/sync_fighters.py
+          @@ -2726,30 +2726,23 @@ def plan_cito_profiles(
+           
+                   if not fighter:
+                       has_mma, mma_reason = has_documented_mma_evidence(profile)
+          -            if has_mma and mma_reason in {
+          -                "official_ufc_athlete_profile",
+          -                "mma_stats_source",
+          -            }:
+          -                fightiq_id = "fiq_cito_" + re.sub(r"[^A-Za-z0-9]", "", cito_id)
+          -                fighter = state.add_fighter(
+          -                    make_cito_fighter(profile, fightiq_id, state.now, None)
+          -                )
+          -                reason = mma_reason
+          -            else:
+          -                quarantine_reason = reason or mma_reason
+          -                if has_mma:
+          -                    quarantine_reason = f"manual_mma_confirmation:{mma_reason}"
+          -                quarantine_report.append(
+          -                    quarantine_profile(
+          -                        state,
+          -                        profile,
+          -                        quarantine_reason,
+          -                        identity_fingerprint,
+          -                        evidence,
+          -                        history_fetch,
+          -                    )
+          +            # Une preuve MMA confirme la nature du profil, pas son unicité.
+          +            # Toute nouvelle fiche Cito-only absente de V5.6 doit donc passer
+          +            # par la revue administrateur avant une création canonique.
+          +            quarantine_reason = reason or mma_reason
+          +            if has_mma:
+          +                quarantine_reason = f"admin_create_required:{mma_reason}"
+          +            quarantine_report.append(
+          +                quarantine_profile(
+          +                    state,
+          +                    profile,
+          +                    quarantine_reason,
+          +                    identity_fingerprint,
+          +                    evidence,
+          +                    history_fetch,
+                           )
+          -                continue
+          +            )
+          +            continue
+           
+                   if reported_ufcstats and fighter.get("ufcstats_id") not in {
+                       None,
+          @@ -2813,9 +2806,61 @@ def plan_cito_profiles(
+                           )
+                       state.set_resolution(resolution_row)
+           
+          -    # Une ancienne ligne NULL disparue de Cito devient une quarantaine explicite.
+          +    # Un lien vérifié dans le registre d'overrides reste applicable même si
+          +    # l'ancien profil n'est plus renvoyé par Cito. Il devient alors un alias de
+          +    # source du combattant canonique, sans réutiliser ses anciennes statistiques.
+               returned_ids = set(profiles_by_id)
+               for cito_id, resolution in list(state.resolutions.items()):
+          +        if cito_id in returned_ids:
+          +            continue
+          +        curated_link = registry.links.get(cito_id)
+          +        if curated_link:
+          +            target_ufcstats_id = normalize_id(curated_link.get("ufcstats_id"))
+          +            fighter = state.find_by_ufcstats(target_ufcstats_id)
+          +            if not fighter:
+          +                quarantine_report.append(
+          +                    {
+          +                        "cito_id": cito_id,
+          +                        "name": resolution.get("name"),
+          +                        "reason": "curated_missing_profile_target_missing",
+          +                        "expected_ufcstats_id": target_ufcstats_id,
+          +                    }
+          +                )
+          +                continue
+          +            primary_profile = not bool(fighter.get("cito_id"))
+          +            state.ensure_source(
+          +                fighter,
+          +                "cito",
+          +                cito_id,
+          +                curated_link.get("cito_name") or resolution.get("name"),
+          +                primary_profile,
+          +            )
+          +            state.ensure_source(
+          +                fighter,
+          +                "ufcstats",
+          +                target_ufcstats_id,
+          +                curated_link.get("ufcstats_name") or fighter.get("display_name"),
+          +                True,
+          +            )
+          +            if primary_profile:
+          +                fighter["cito_id"] = cito_id
+          +                fighter["fightiq_updated_at"] = state.now
+          +            linked = deepcopy(resolution)
+          +            linked.update(
+          +                {
+          +                    "resolution_status": "linked_existing_fighter",
+          +                    "resolution_reason": curated_link.get("resolution_reason")
+          +                    or "curated_link_profile_no_longer_returned",
+          +                    "matched_fightiq_id": fighter.get("fightiq_id"),
+          +                    "matched_ufcstats_id": fighter.get("ufcstats_id"),
+          +                    "resolved_at": state.now,
+          +                    "review_status": "applied",
+          +                }
+          +            )
+          +            state.set_resolution(linked)
+          +            continue
+          +
+          +        # Une ancienne ligne NULL disparue de Cito devient une quarantaine explicite.
+                   if not resolution.get("resolution_status") and cito_id not in returned_ids:
+                       quarantined = deepcopy(resolution)
+                       quarantined.update(
+          @@ -3043,6 +3088,23 @@ def apply_plan(sb: Any, state: PlannedState, dry_run: bool) -> dict[str, int]:
+               }
+               print("===== WRITE PLAN =====")
+               print(json.dumps(summary, ensure_ascii=False, indent=2))
+          +    if fighter_inserts:
+          +        print("===== PLANNED FIGHTER INSERTS =====")
+          +        print(
+          +            json.dumps(
+          +                [
+          +                    {
+          +                        "fightiq_id": row.get("fightiq_id"),
+          +                        "display_name": row.get("display_name"),
+          +                        "ufcstats_id": row.get("ufcstats_id"),
+          +                        "cito_id": row.get("cito_id"),
+          +                    }
+          +                    for row in fighter_inserts
+          +                ],
+          +                ensure_ascii=False,
+          +                indent=2,
+          +            )
+          +        )
+               if dry_run:
+                   print("DRY RUN: no Supabase rows changed")
+                   return summary
+          diff --git a/tests/test_sync_fighters.py b/tests/test_sync_fighters.py
+          index e3e553a..82680d3 100644
+          --- a/tests/test_sync_fighters.py
+          +++ b/tests/test_sync_fighters.py
+          @@ -538,6 +538,88 @@ class IdentityTests(unittest.TestCase):
+                   )
+                   self.assertEqual(state.fighters, {})
+           
+          +    def test_new_cito_mma_profile_requires_admin_create(self):
+          +        state = make_state()
+          +        profile = {
+          +            "id": "cito-new-mma",
+          +            "name": "Documented MMA Fighter",
+          +            "profileUrl": "https://www.ufc.com/athlete/documented-mma-fighter",
+          +        }
+          +        review = sync.plan_cito_profiles(
+          +            state,
+          +            [profile],
+          +            sync.ResolutionRegistry(),
+          +        )
+          +        self.assertEqual(len(review), 1)
+          +        self.assertEqual(state.fighters, {})
+          +        self.assertEqual(
+          +            state.resolutions["cito-new-mma"]["resolution_status"],
+          +            "quarantined",
+          +        )
+          +        self.assertEqual(
+          +            state.resolutions["cito-new-mma"]["resolution_reason"],
+          +            "admin_create_required:official_ufc_athlete_profile",
+          +        )
+          +
+          +    def test_missing_cito_profile_can_use_curated_link(self):
+          +        state = make_state(
+          +            fighters=[
+          +                {
+          +                    "fightiq_id": "fiq_ufc-target",
+          +                    "display_name": "Adrian Luna Martinetti",
+          +                    "ufcstats_id": "ufc-target",
+          +                    "cito_id": None,
+          +                }
+          +            ],
+          +            sources=[
+          +                {
+          +                    "fightiq_id": "fiq_ufc-target",
+          +                    "source": "ufcstats",
+          +                    "source_id": "ufc-target",
+          +                    "source_name": "Adrian Luna Martinetti",
+          +                    "is_primary": True,
+          +                }
+          +            ],
+          +            resolutions=[
+          +                {
+          +                    "cito_id": "cito-removed",
+          +                    "name": "Adrián Luna Martinetti",
+          +                    "resolution_status": None,
+          +                    "resolution_reason": None,
+          +                    "raw_json": {"id": "cito-removed"},
+          +                }
+          +            ],
+          +        )
+          +        registry = sync.ResolutionRegistry(
+          +            links={
+          +                "cito-removed": {
+          +                    "cito_id": "cito-removed",
+          +                    "cito_name": "Adrián Luna Martinetti",
+          +                    "ufcstats_id": "ufc-target",
+          +                    "ufcstats_name": "Adrian Luna Martinetti",
+          +                    "resolution_reason": "verified_removed_profile_link",
+          +                }
+          +            }
+          +        )
+          +        review = sync.plan_cito_profiles(state, [], registry)
+          +        self.assertEqual(review, [])
+          +        self.assertEqual(
+          +            state.sources[("cito", "cito-removed")]["fightiq_id"],
+          +            "fiq_ufc-target",
+          +        )
+          +        self.assertEqual(
+          +            state.fighters["fiq_ufc-target"]["cito_id"],
+          +            "cito-removed",
+          +        )
+          +        self.assertEqual(
+          +            state.resolutions["cito-removed"]["resolution_status"],
+          +            "linked_existing_fighter",
+          +        )
+          +        self.assertEqual(
+          +            state.resolutions["cito-removed"]["review_status"],
+          +            "applied",
+          +        )
+          +
+               def test_quarantine_does_not_block_safe_profile_update(self):
+                   state = make_state(
+                       [
+          PATCH
+          fi
 
-      - name: Extract package
-        run: |
-          unzip -o FightIQ_sauvegarde_complete_identite_unifiee_2026-08-17.zip -d .
-
-      - name: Verify required files
-        run: |
-          test -f scripts/sync_fighters.py
-          test -f scripts/enrich_rankings_cito.py
-          test -f data/cito_identity_resolution_v5_6.json
-          test -f tests/test_sync_fighters.py
-          test -f supabase/migrations/202608170001_fighter_identity_admin_review.sql
-
-      - name: Run FightIQ tests
+      - name: Validate the correction
         run: |
           python -m unittest discover -s tests -v
-          python -m py_compile \
-            scripts/sync_fighters.py \
-            scripts/enrich_rankings_cito.py
+          python -m py_compile scripts/sync_fighters.py scripts/enrich_rankings_cito.py
+          python -m json.tool data/cito_identity_overrides.json > /dev/null
 
-      - name: Prepare safe GitHub commit
+      - name: Commit the correction to main
         run: |
-          rm -f FightIQ_sauvegarde_complete_identite_unifiee_2026-08-17.zip
-
-          git restore --source=HEAD -- .github/workflows/update-fighters.yml
-          rm -f .github/workflows/update-rankings.yml
-
           git config user.name "FightIQ Automation"
           git config user.email "actions@users.noreply.github.com"
 
-          git add -A
+          git add \
+            scripts/sync_fighters.py \
+            data/cito_identity_overrides.json \
+            tests/test_sync_fighters.py
 
           if git diff --cached --quiet; then
             echo "Aucune modification à enregistrer."
             exit 0
           fi
 
-          git commit -m "Install unified FightIQ fighter pipeline"
+          git commit -m "Require admin review for new Cito-only fighters"
           git push origin "HEAD:${GITHUB_REF_NAME}"
