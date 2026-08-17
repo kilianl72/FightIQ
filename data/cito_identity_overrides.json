@@ -1,7 +1,20 @@
 {
   "version": "1.0",
   "description": "Décisions manuelles prises après la consolidation V5.6. Ce fichier est lu après le registre historique et a donc priorité.",
-  "links": [],
+  "links": [
+    {
+      "cito_id": "c1a9d4cf-506b-46c1-9ae6-a82908906cec",
+      "cito_name": "Adrián Luna Martinetti",
+      "ufcstats_id": "e3b30b573e7f0d19",
+      "ufcstats_name": "Adrian Luna Martinetti",
+      "resolution_reason": "verified_ufcstats_identity_after_cito_profile_removed",
+      "evidence": {
+        "date_of_birth": "1995-08-20",
+        "ufcstats_url": "http://ufcstats.com/fighter-details/e3b30b573e7f0d19",
+        "official_ufc_url": "https://www.ufc.com/athlete/juan-martinetti"
+      }
+    }
+  ],
   "creates": [],
   "exclusions": []
 }

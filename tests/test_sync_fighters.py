@@ -538,6 +538,88 @@ class IdentityTests(unittest.TestCase):
         )
         self.assertEqual(state.fighters, {})
 
+    def test_new_cito_mma_profile_requires_admin_create(self):
+        state = make_state()
+        profile = {
+            "id": "cito-new-mma",
+            "name": "Documented MMA Fighter",
+            "profileUrl": "https://www.ufc.com/athlete/documented-mma-fighter",
+        }
+        review = sync.plan_cito_profiles(
+            state,
+            [profile],
+            sync.ResolutionRegistry(),
+        )
+        self.assertEqual(len(review), 1)
+        self.assertEqual(state.fighters, {})
+        self.assertEqual(
+            state.resolutions["cito-new-mma"]["resolution_status"],
+            "quarantined",
+        )
+        self.assertEqual(
+            state.resolutions["cito-new-mma"]["resolution_reason"],
+            "admin_create_required:official_ufc_athlete_profile",
+        )
+
+    def test_missing_cito_profile_can_use_curated_link(self):
+        state = make_state(
+            fighters=[
+                {
+                    "fightiq_id": "fiq_ufc-target",
+                    "display_name": "Adrian Luna Martinetti",
+                    "ufcstats_id": "ufc-target",
+                    "cito_id": None,
+                }
+            ],
+            sources=[
+                {
+                    "fightiq_id": "fiq_ufc-target",
+                    "source": "ufcstats",
+                    "source_id": "ufc-target",
+                    "source_name": "Adrian Luna Martinetti",
+                    "is_primary": True,
+                }
+            ],
+            resolutions=[
+                {
+                    "cito_id": "cito-removed",
+                    "name": "Adrián Luna Martinetti",
+                    "resolution_status": None,
+                    "resolution_reason": None,
+                    "raw_json": {"id": "cito-removed"},
+                }
+            ],
+        )
+        registry = sync.ResolutionRegistry(
+            links={
+                "cito-removed": {
+                    "cito_id": "cito-removed",
+                    "cito_name": "Adrián Luna Martinetti",
+                    "ufcstats_id": "ufc-target",
+                    "ufcstats_name": "Adrian Luna Martinetti",
+                    "resolution_reason": "verified_removed_profile_link",
+                }
+            }
+        )
+        review = sync.plan_cito_profiles(state, [], registry)
+        self.assertEqual(review, [])
+        self.assertEqual(
+            state.sources[("cito", "cito-removed")]["fightiq_id"],
+            "fiq_ufc-target",
+        )
+        self.assertEqual(
+            state.fighters["fiq_ufc-target"]["cito_id"],
+            "cito-removed",
+        )
+        self.assertEqual(
+            state.resolutions["cito-removed"]["resolution_status"],
+            "linked_existing_fighter",
+        )
+        self.assertEqual(
+            state.resolutions["cito-removed"]["review_status"],
+            "applied",
+        )
+
     def test_quarantine_does_not_block_safe_profile_update(self):
         state = make_state(
             [

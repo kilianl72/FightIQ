@@ -2726,30 +2726,23 @@ def plan_cito_profiles(
 
         if not fighter:
             has_mma, mma_reason = has_documented_mma_evidence(profile)
-            if has_mma and mma_reason in {
-                "official_ufc_athlete_profile",
-                "mma_stats_source",
-            }:
-                fightiq_id = "fiq_cito_" + re.sub(r"[^A-Za-z0-9]", "", cito_id)
-                fighter = state.add_fighter(
-                    make_cito_fighter(profile, fightiq_id, state.now, None)
+            # Une preuve MMA confirme la nature du profil, pas son unicité.
+            # Toute nouvelle fiche Cito-only absente de V5.6 doit donc passer
+            # par la revue administrateur avant une création canonique.
+            quarantine_reason = reason or mma_reason
+            if has_mma:
+                quarantine_reason = f"admin_create_required:{mma_reason}"
+            quarantine_report.append(
+                quarantine_profile(
+                    state,
+                    profile,
+                    quarantine_reason,
+                    identity_fingerprint,
+                    evidence,
+                    history_fetch,
                 )
-                reason = mma_reason
-            else:
-                quarantine_reason = reason or mma_reason
-                if has_mma:
-                    quarantine_reason = f"manual_mma_confirmation:{mma_reason}"
-                quarantine_report.append(
-                    quarantine_profile(
-                        state,
-                        profile,
-                        quarantine_reason,
-                        identity_fingerprint,
-                        evidence,
-                        history_fetch,
-                    )
-                )
-                continue
+            )
+            continue
 
         if reported_ufcstats and fighter.get("ufcstats_id") not in {
             None,
@@ -2813,9 +2806,61 @@ def plan_cito_profiles(
                 )
             state.set_resolution(resolution_row)
 
-    # Une ancienne ligne NULL disparue de Cito devient une quarantaine explicite.
+    # Un lien vérifié dans le registre d'overrides reste applicable même si
+    # l'ancien profil n'est plus renvoyé par Cito. Il devient alors un alias de
+    # source du combattant canonique, sans réutiliser ses anciennes statistiques.
     returned_ids = set(profiles_by_id)
     for cito_id, resolution in list(state.resolutions.items()):
+        if cito_id in returned_ids:
+            continue
+        curated_link = registry.links.get(cito_id)
+        if curated_link:
+            target_ufcstats_id = normalize_id(curated_link.get("ufcstats_id"))
+            fighter = state.find_by_ufcstats(target_ufcstats_id)
+            if not fighter:
+                quarantine_report.append(
+                    {
+                        "cito_id": cito_id,
+                        "name": resolution.get("name"),
+                        "reason": "curated_missing_profile_target_missing",
+                        "expected_ufcstats_id": target_ufcstats_id,
+                    }
+                )
+                continue
+            primary_profile = not bool(fighter.get("cito_id"))
+            state.ensure_source(
+                fighter,
+                "cito",
+                cito_id,
+                curated_link.get("cito_name") or resolution.get("name"),
+                primary_profile,
+            )
+            state.ensure_source(
+                fighter,
+                "ufcstats",
+                target_ufcstats_id,
+                curated_link.get("ufcstats_name") or fighter.get("display_name"),
+                True,
+            )
+            if primary_profile:
+                fighter["cito_id"] = cito_id
+                fighter["fightiq_updated_at"] = state.now
+            linked = deepcopy(resolution)
+            linked.update(
+                {
+                    "resolution_status": "linked_existing_fighter",
+                    "resolution_reason": curated_link.get("resolution_reason")
+                    or "curated_link_profile_no_longer_returned",
+                    "matched_fightiq_id": fighter.get("fightiq_id"),
+                    "matched_ufcstats_id": fighter.get("ufcstats_id"),
+                    "resolved_at": state.now,
+                    "review_status": "applied",
+                }
+            )
+            state.set_resolution(linked)
+            continue
+
+        # Une ancienne ligne NULL disparue de Cito devient une quarantaine explicite.
         if not resolution.get("resolution_status") and cito_id not in returned_ids:
             quarantined = deepcopy(resolution)
             quarantined.update(
@@ -3043,6 +3088,23 @@ def apply_plan(sb: Any, state: PlannedState, dry_run: bool) -> dict[str, int]:
     }
     print("===== WRITE PLAN =====")
     print(json.dumps(summary, ensure_ascii=False, indent=2))
+    if fighter_inserts:
+        print("===== PLANNED FIGHTER INSERTS =====")
+        print(
+            json.dumps(
+                [
+                    {
+                        "fightiq_id": row.get("fightiq_id"),
+                        "display_name": row.get("display_name"),
+                        "ufcstats_id": row.get("ufcstats_id"),
+                        "cito_id": row.get("cito_id"),
+                    }
+                    for row in fighter_inserts
+                ],
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
     if dry_run:
         print("DRY RUN: no Supabase rows changed")
         return summary
