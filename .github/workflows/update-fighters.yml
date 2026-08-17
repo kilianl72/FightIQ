@@ -1,20 +1,28 @@
-name: V5.1 Update FightIQ fighter data
+name: Sync FightIQ canonical fighter database
 
 on:
   workflow_dispatch:
     inputs:
-      run_cito:
-        description: "Actualiser les données Cito (profils + stats + rankings)"
-        required: false
+      dry_run:
+        description: "Simuler et valider sans écrire dans Supabase"
+        required: true
         type: boolean
-        default: false
+        default: true
 
   schedule:
     - cron: "30 5 * * *"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: fightiq-fighter-database-sync
+  cancel-in-progress: false
+
 jobs:
-  import-fighters:
+  sync-fighters:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
 
     steps:
       - name: Checkout FightIQ
@@ -24,28 +32,29 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
 
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Import fighters from UFCStats
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-        run: python scripts/import_fighters.py
+      - name: Test fighter identity rules
+        run: python -m unittest discover -s tests -p 'test_sync_fighters.py' -v
 
-      - name: Enrich fighter profiles and stats with Cito
-        if: ${{ github.event_name == 'schedule' || inputs.run_cito }}
+      - name: Sync and validate canonical fighter database
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
           CITO_API_KEY: ${{ secrets.CITO_API_KEY }}
-        run: python scripts/enrich_fighters_cito_v5_1_update_only.py
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+          CITO_RESOLUTION_FILES: data/cito_identity_resolution_v5_6.json,data/cito_identity_overrides.json
+          FIGHTIQ_QUARANTINE_REPORT: reports/fighter_identity_quarantine.json
+        run: python scripts/sync_fighters.py
 
-      - name: Enrich UFC rankings with Cito
-        if: ${{ github.event_name == 'schedule' || inputs.run_cito }}
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
-          CITO_API_KEY: ${{ secrets.CITO_API_KEY }}
-        run: python scripts/enrich_rankings_cito.py
+      - name: Upload administrator identity report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fightiq-fighter-identity-report-${{ github.run_number }}
+          path: reports/fighter_identity_quarantine.json
+          if-no-files-found: warn
+          retention-days: 30
