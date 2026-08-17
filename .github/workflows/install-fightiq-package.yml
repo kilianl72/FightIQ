@@ -1,0 +1,57 @@
+name: Install FightIQ unified package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  install-package:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout FightIQ
+        uses: actions/checkout@v4
+
+      - name: Verify ZIP
+        run: |
+          test -f FightIQ_sauvegarde_complete_identite_unifiee_2026-08-17.zip
+          unzip -t FightIQ_sauvegarde_complete_identite_unifiee_2026-08-17.zip
+
+      - name: Extract package at repository root
+        run: |
+          unzip -o FightIQ_sauvegarde_complete_identite_unifiee_2026-08-17.zip -d .
+
+      - name: Verify required files
+        run: |
+          test -f scripts/sync_fighters.py
+          test -f scripts/enrich_rankings_cito.py
+          test -f .github/workflows/update-fighters.yml
+          test -f .github/workflows/update-rankings.yml
+          test -f data/cito_identity_resolution_v5_6.json
+
+      - name: Run FightIQ tests
+        run: |
+          python -m unittest discover -s tests -v
+          python -m py_compile \
+            scripts/sync_fighters.py \
+            scripts/enrich_rankings_cito.py
+
+      - name: Commit installed package
+        run: |
+          rm -f FightIQ_sauvegarde_complete_identite_unifiee_2026-08-17.zip
+          rm -f .github/workflows/install-fightiq-package.yml
+
+          git config user.name "FightIQ Automation"
+          git config user.email "actions@users.noreply.github.com"
+
+          git add -A
+
+          if git diff --cached --quiet; then
+            echo "Aucune modification à enregistrer."
+            exit 0
+          fi
+
+          git commit -m "Install unified FightIQ fighter pipeline"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
