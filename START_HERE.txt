@@ -1,0 +1,29 @@
+FIGHTIQ - SAUVEGARDE CONSOLIDEE DU 17 AOUT 2026
+
+1. Extraire tout le contenu de ce ZIP a la racine du depot FightIQ.
+2. Ne supprimer aucun ancien script avant les essais.
+3. Lire INSTALLATION.md.
+4. Appliquer la migration Supabase 202608170001_fighter_identity_admin_review.sql.
+5. Lancer d'abord le workflow fighters avec dry_run = true.
+6. Exiger unresolved = 0 et verifier l'artefact administrateur quarantined.
+7. Lancer ensuite le vrai run fighters.
+8. Tester le ranking en dry_run, puis lancer le vrai run.
+9. Supprimer seulement apres cela les anciens fichiers listes dans INSTALLATION.md.
+
+Regle de nettoyage : un seul script/workflow doit rester pour les combattants
+generaux (sync_fighters.py + update-fighters.yml). Le ranking conserve son
+couple separe enrich_rankings_cito.py + update-rankings.yml par conception.
+
+Le matching des alias ne repose jamais sur l'historique seul : il exige aussi
+une date de naissance exacte, un lieu de naissance precis compatible ou au
+moins deux mensurations concordantes. Un doute reste dans la file admin.
+
+Fichiers de memoire :
+- FIGHTIQ_PROJECT_CONTEXT.md : vision, historique et prochaines etapes.
+- FIGHTIQ_DATA_ARCHITECTURE.md : tables, champs et regles d'identite.
+- FIGHTIQ_ADMIN_IDENTITY_REVIEW.md : file et actions administrateur.
+- FIGHTIQ_CHANGELOG.md : travail technique realise.
+
+Le ZIP contient aussi les deux scripts, les deux workflows, le registre V5.6,
+le registre d'overrides de secours, la migration Supabase, le rapport admin,
+les dependances et les tests. Aucun secret Supabase ou Cito n'est inclus.

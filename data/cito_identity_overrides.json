@@ -1,0 +1,7 @@
+{
+  "version": "1.0",
+  "description": "Décisions manuelles prises après la consolidation V5.6. Ce fichier est lu après le registre historique et a donc priorité.",
+  "links": [],
+  "creates": [],
+  "exclusions": []
+}
