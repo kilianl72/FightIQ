@@ -1,0 +1,48 @@
+name: Sync FightIQ UFC rankings
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Simuler et valider sans écrire dans Supabase"
+        required: true
+        type: boolean
+        default: true
+
+  schedule:
+    # Une fois par semaine, le dimanche à 10 h 30 en heure de Paris.
+    - cron: "30 10 * * 0"
+      timezone: "Europe/Paris"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fightiq-ranking-sync
+  cancel-in-progress: false
+
+jobs:
+  sync-rankings:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Checkout FightIQ
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Refresh rankings and champion status
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SECRET_KEY: ${{ secrets.SUPABASE_SECRET_KEY }}
+          CITO_API_KEY: ${{ secrets.CITO_API_KEY }}
+          DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run || false }}
+        run: python scripts/enrich_rankings_cito.py
