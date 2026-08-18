@@ -37,56 +37,53 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-      - name: Remove replaced files
+      - name: Remove replaced non-workflow files
         run: |
-          git rm --ignore-unmatch -- \
-            FightIQ_clean_v6.zip \
-            START_HERE.txt \
-            scripts/audit_fighters_v1.py \
-            scripts/audit_remaining_fighter_gaps.py \
-            scripts/complete_fighter_profiles_cito_v2.py \
-            scripts/consolidate_fighter_identities_v5_6.py \
-            scripts/enrich_fighters_cito_v5_1_update_only.py \
-            scripts/import_fighters.py \
-            .github/workflows/complete-fighter-profiles-cito-v2.yml \
-            .github/workflows/consolidate-fighter-identities-v5-6.yml \
-            .github/workflows/install-fightiq-package.yml \
-            data/cito_identity_resolution_v5_6.json \
-            data/cito_identity_overrides.json
+          remove_paths=(
+            "FightIQ_clean_v6.zip"
+            "START_HERE.txt"
+            "scripts/audit_fighters_v1.py"
+            "scripts/audit_remaining_fighter_gaps.py"
+            "scripts/complete_fighter_profiles_cito_v2.py"
+            "scripts/consolidate_fighter_identities_v5_6.py"
+            "scripts/enrich_fighters_cito_v5_1_update_only.py"
+            "scripts/import_fighters.py"
+            "data/cito_identity_resolution_v5_6.json"
+            "data/cito_identity_overrides.json"
+          )
+          git rm --ignore-unmatch -- "${remove_paths[@]}"
           rm -f apply_fightiq_cleanup.sh
 
       - name: Validate cleaned package
         run: |
-          python -m py_compile \
-            scripts/sync_fighters.py \
-            scripts/enrich_rankings_cito.py
+          python -m py_compile scripts/sync_fighters.py scripts/enrich_rankings_cito.py
           python -m json.tool data/fighter_identity_registry.json > /dev/null
           python -m unittest discover -s tests -v
 
-      - name: Commit cleaned repository to main
+      - name: Commit non-workflow files to main
         run: |
+          keep_paths=(
+            ".gitignore"
+            "FIGHTIQ_ADMIN_IDENTITY_REVIEW.md"
+            "FIGHTIQ_CHANGELOG.md"
+            "FIGHTIQ_DATA_ARCHITECTURE.md"
+            "FIGHTIQ_PROJECT_CONTEXT.md"
+            "INSTALLATION.md"
+            "README.md"
+            "data/fighter_identity_registry.json"
+            "reports/README.md"
+            "requirements.txt"
+            "scripts/enrich_rankings_cito.py"
+            "scripts/sync_fighters.py"
+            "supabase/migrations/202608170001_fighter_identity_admin_review.sql"
+            "supabase/migrations/202608180001_merge_fighter_identities.sql"
+            "tests/test_enrich_rankings_cito.py"
+            "tests/test_sync_fighters.py"
+          )
+
           git config user.name "FightIQ Automation"
           git config user.email "actions@users.noreply.github.com"
-
-          git add -- \
-            .github/workflows/update-fighters.yml \
-            .github/workflows/update-rankings.yml \
-            .gitignore \
-            FIGHTIQ_ADMIN_IDENTITY_REVIEW.md \
-            FIGHTIQ_CHANGELOG.md \
-            FIGHTIQ_DATA_ARCHITECTURE.md \
-            FIGHTIQ_PROJECT_CONTEXT.md \
-            INSTALLATION.md \
-            README.md \
-            data/fighter_identity_registry.json \
-            reports/README.md \
-            requirements.txt \
-            scripts/enrich_rankings_cito.py \
-            scripts/sync_fighters.py \
-            supabase/migrations/202608170001_fighter_identity_admin_review.sql \
-            supabase/migrations/202608180001_merge_fighter_identities.sql \
-            tests/test_enrich_rankings_cito.py \
-            tests/test_sync_fighters.py
+          git add -- "${keep_paths[@]}"
 
           if git diff --cached --quiet; then
             echo "Aucune modification à enregistrer."
