@@ -1,83 +1,98 @@
 # FightIQ
 
-FightIQ est un projet d'application d'analyse MMA/UFC reposant sur une identité
-canonique unique par combattant et sur des données UFCStats + Cito.
+FightIQ est une application d'analyse MMA/UFC construite autour d'une identité
+canonique unique par combattant et de données UFCStats + Cito.
 
-## État actuel
+## État de référence
 
-- socle connu : 4 607 combattants ;
-- consolidation V5.6 : `unresolved = 0` ;
-- identités multi-sources via `fighter_source_ids` ;
-- informations générales et statistiques globales disponibles ;
-- matching des alias renforcé par les combats et par une preuve biographique
-  indépendante (date ou lieu de naissance, ou mensurations concordantes) ;
-- backend et rapport de revue administrateur des quarantaines préparés ;
-- ranking actuel géré séparément ;
-- application et données combats/rounds encore à construire.
+Le dernier état Supabase contrôlé avant la correction des doublons V5.6 était :
 
-## Pipelines
+- 4 607 combattants ;
+- 3 185 UFCStats + Cito ;
+- 1 403 UFCStats uniquement ;
+- 19 Cito uniquement ;
+- 0 identité non résolue.
 
-```text
-scripts/sync_fighters.py
-    identité + profil + statistiques globales
+L'analyse des 19 fiches Cito-only a identifié 12 anciennes fiches dupliquées
+qui doivent rejoindre un combattant UFCStats existant. Après la fusion, la cible
+est donc de **4 595 combattants**, dont **7 Cito-only légitimes**. Ces 7 profils
+ont une activité MMA documentée mais aucun combat officiel présent dans
+UFCStats.
 
-scripts/enrich_rankings_cito.py
-    ranking + P4P + champions
-```
+## Ossature active
 
-Les workflows correspondants sont :
+| Domaine | Script | Workflow |
+|---|---|---|
+| Identité, profil et statistiques globales | `scripts/sync_fighters.py` | `.github/workflows/update-fighters.yml` |
+| Rankings, P4P et champions | `scripts/enrich_rankings_cito.py` | `.github/workflows/update-rankings.yml` |
 
-```text
-.github/workflows/update-fighters.yml
-.github/workflows/update-rankings.yml
-```
+Le ranking reste volontairement séparé : il s'agit d'un état sportif
+hebdomadaire, pas d'un ancien doublon du pipeline combattants.
+
+## Registre d'identité
+
+`data/fighter_identity_registry.json` contient toutes les décisions validées :
+liens Cito/UFCStats, créations Cito-only légitimes et exclusions. Il consolide
+le registre V5.6 et les corrections ultérieures, avec une seule décision finale
+par ID Cito. Supabase reste la source de vérité en production ; ce registre
+versionné permet de reconstruire les associations sans refaire les recherches.
+
+## Fiabilité canonique
+
+Une fiche `fighters` doit appartenir à une seule de ces catégories :
+
+1. UFCStats + Cito ;
+2. UFCStats uniquement ;
+3. Cito uniquement avec preuve MMA suffisante.
+
+Les profils Power Slap, tests et non-MMA sont exclus. Une identité ambiguë reste
+hors de `fighters` dans la file administrateur, sans bloquer les mises à jour
+sûres.
+
+Un nom, un slug ou un palmarès global identique ne suffit jamais à fusionner.
+Les alias sont confirmés par l'historique des combats et une preuve indépendante
+compatible : date de naissance, lieu de naissance précis ou plusieurs
+mensurations. Toute contradiction bloque le rapprochement.
+
+Les corrections explicitement validées peuvent fusionner une ancienne fiche
+Cito-only dupliquée vers l'identité UFCStats canonique. La fusion est réalisée
+dans une transaction Supabase unique. Les données et références sont déplacées
+avant la suppression de l'ancien `fightiq_id` ; aucune redirection permanente
+n'est conservée. Le mécanisme refuse de supprimer une fiche qui possède déjà
+une identité UFCStats.
+
+## Mise en service de la correction
+
+1. Appliquer la migration
+   `supabase/migrations/202608180001_merge_fighter_identities.sql` dans
+   Supabase sous le nom **V5.8 - Canonical fighter merges**.
+2. Lancer **Sync FightIQ canonical fighter database** avec
+   `dry_run = true`.
+3. Vérifier notamment : `unresolved = 0`, `fighter_merges = 12`,
+   `fighters_total = 4595` et `cito_only = 7`.
+4. Examiner toute quarantaine éventuellement apparue depuis le dernier run.
+5. Relancer le même workflow avec `dry_run = false`.
+6. Vérifier le rapport final relu directement depuis Supabase.
+
+Le workflow combattants tourne ensuite quotidiennement. Le ranking tourne une
+fois par semaine, le dimanche à 10 h 30, heure de Paris.
 
 ## Documentation
 
-- `START_HERE.txt` : ordre d'installation ;
-- `INSTALLATION.md` : déploiement et nettoyage ;
-- `FIGHTIQ_PROJECT_CONTEXT.md` : mémoire complète du projet ;
-- `FIGHTIQ_DATA_ARCHITECTURE.md` : champs, tables et règles d'identité ;
-- `FIGHTIQ_CHANGELOG.md` : travail sauvegardé.
-
-## Principe de fiabilité
-
-La table `fighters` accepte seulement :
-
-1. UFCStats + Cito associés ;
-2. UFCStats seul ;
-3. Cito seul avec preuve MMA.
-
-Les profils Power Slap/test/non-MMA sont exclus. Les profils ambigus sont placés
-en quarantaine hors de `fighters` afin de préserver la base sans bloquer les
-autres mises à jour.
-
-Les noms complets, noms inversés, surnoms, accents, translittérations et alias
-de source servent à retrouver les candidats. Deux alias peuvent être associés
-malgré un nom différent uniquement lorsque plusieurs combats communs et leurs
-résultats sont compatibles **et** qu'au moins une preuve indépendante confirme
-l'identité : date de naissance exacte, lieu de naissance précis compatible, ou
-au moins deux mensurations concordantes. Un pays seul, un slug seul, un nom
-seul ou le palmarès global seul ne décide jamais d'une fusion. Toute
-contradiction reste en quarantaine.
-
-Il existe un seul script et un seul workflow pour les informations générales,
-l'identité et les statistiques globales des combattants :
-`scripts/sync_fighters.py` et `.github/workflows/update-fighters.yml`. Le
-ranking reste volontairement séparé, car il s'agit d'un snapshot sportif
-distinct et non d'un ancien workflow d'identité à conserver.
-
-La future application administrateur utilisera la vue
-`admin_fighter_identity_queue`. Sa migration et son contrat sont décrits dans
-`FIGHTIQ_ADMIN_IDENTITY_REVIEW.md`. Le fichier
-`data/cito_identity_overrides.json` reste un secours versionné, sans modifier le
-registre historique V5.6.
+- `FIGHTIQ_PROJECT_CONTEXT.md` : mémoire complète, objectifs et prochaines
+  étapes ;
+- `FIGHTIQ_DATA_ARCHITECTURE.md` : tables, champs et règles d'identité ;
+- `FIGHTIQ_ADMIN_IDENTITY_REVIEW.md` : fonctionnement de la file
+  administrateur ;
+- `FIGHTIQ_CHANGELOG.md` : historique technique ;
+- `INSTALLATION.md` : exploitation, contrôles et reprise en cas d'échec.
 
 ## Tests
 
 ```bash
 python -m unittest discover -s tests -v
+python -m py_compile scripts/sync_fighters.py scripts/enrich_rankings_cito.py
 ```
 
-Ne jamais enregistrer les clés Supabase ou Cito dans le dépôt. Elles doivent
-rester dans les secrets GitHub Actions.
+Les clés Supabase et Cito restent exclusivement dans les secrets GitHub
+Actions.

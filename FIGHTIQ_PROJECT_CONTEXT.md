@@ -26,10 +26,12 @@ Le dépôt GitHub reste la source de vérité pour le code, les migrations, les 
 
 FightIQ est une future plateforme web d’analyse MMA centrée sur les combattants et les combats.
 
-L’état réel au 17 août 2026 est le suivant :
+L’état réel au 18 août 2026 est le suivant :
 
 - le socle de données est largement avancé ;
-- environ 4 607 combattants sont présents dans la base ;
+- 4 607 combattants sont encore présents avant la fusion V5.8 ; le plan
+  vérifié doit ramener ce total à 4 595 en fusionnant 12 anciennes fiches
+  Cito-only dupliquées ;
 - l’import UFCStats, l’enrichissement Cito, les audits et une importante phase de rapprochement d’identités ont été réalisés ;
 - le modèle d’identité canonique `fightiq_id` et la table multi-sources `fighter_source_ids` sont validés ;
 - la consolidation V5.6 a terminé avec `unresolved = 0` et a produit trois catégories seulement : UFCStats+Cito, UFCStats seul et Cito seul avec preuve MMA ;
@@ -37,7 +39,9 @@ L’état réel au 17 août 2026 est le suivant :
 - le véritable site FightIQ n’est pas encore développé ;
 - les anciens fichiers HTML sont des prototypes, pas le futur produit ;
 - Wikidata n’apporte actuellement aucune donnée utile et est écarté du pipeline V1 ;
-- un paquet de remplacement complet réunit l’import UFCStats, l’enrichissement Cito, la consolidation et la validation dans `scripts/sync_fighters.py` ; il doit encore réussir un dry-run puis un run réel avant suppression des anciens scripts ;
+- `scripts/sync_fighters.py` réunit l’import UFCStats, l’enrichissement Cito,
+  la consolidation et la validation ; les anciens scripts et workflows
+  remplacés ont été retirés du dépôt ;
 - un nouveau profil ambigu est désormais placé en quarantaine hors de `fighters` sans bloquer les autres mises à jour fiables ;
 - les nouveaux alias peuvent être retrouvés par nom complet, surnom ou variante
   de source, puis confirmés par plusieurs combats, adversaires, événements et
@@ -49,7 +53,8 @@ L’état réel au 17 août 2026 est le suivant :
   rapport JSON préparent la future file de revue administrateur ; l'écran de
   l'application n'est pas encore développé ;
 - le ranking conserve `scripts/enrich_rankings_cito.py`, passe dans un workflow indépendant et ne remet plus les anciens rankings à zéro avant validation ;
-- après cette validation et ce nettoyage, la priorité est la création de l’application.
+- après le dry-run puis le run réel de la fusion V5.8, la priorité est la
+  création de l’application.
 
 ## 2. Identité et ambition du produit
 
@@ -249,11 +254,15 @@ Une grosse phase de rapprochement des entrées Cito non associées a été mené
 - création uniquement lorsqu’aucune identité existante ne correspondait réellement ;
 - consolidation finale dans `fighter_source_ids`.
 
-Les phases v5.2 à v5.6 ont notamment servi à améliorer le matching, traiter les alias, investiguer les non-appariés et stabiliser les associations. L’exécution V5.6 validée a terminé avec zéro entrée non résolue. Son registre historique doit être conservé dans `data/cito_identity_resolution_v5_6.json`.
+Les phases v5.2 à v5.6 ont notamment servi à améliorer le matching, traiter les
+alias, investiguer les non-appariés et stabiliser les associations. L’exécution
+V5.6 validée a terminé avec zéro entrée non résolue. Ses décisions historiques
+sont conservées, avec les corrections ultérieures, dans le registre unique
+`data/fighter_identity_registry.json`.
 
 ### 7.3 État des fichiers techniques
 
-Avant le nettoyage, le dépôt contient notamment :
+Avant le nettoyage du 18 août 2026, le dépôt contenait notamment :
 
 - `scripts/import_fighters.py` ;
 - `scripts/enrich_fighters_cito_v5_1_update_only.py` ;
@@ -263,18 +272,18 @@ Avant le nettoyage, le dépôt contient notamment :
 - `scripts/audit_fighters_v1.py` ;
 - `scripts/audit_remaining_fighter_gaps.py` ;
 - les workflows GitHub Actions correspondants ;
-- `data/cito_identity_resolution_v5_6.json`.
+- les deux anciens registres JSON d'identité.
 
-État cible après validation du nouveau pipeline :
+État actif après nettoyage :
 
 ```text
 scripts/sync_fighters.py
 scripts/enrich_rankings_cito.py
 .github/workflows/update-fighters.yml
 .github/workflows/update-rankings.yml
-data/cito_identity_resolution_v5_6.json
-data/cito_identity_overrides.json
+data/fighter_identity_registry.json
 supabase/migrations/202608170001_fighter_identity_admin_review.sql
+supabase/migrations/202608180001_merge_fighter_identities.sql
 requirements.txt
 FIGHTIQ_PROJECT_CONTEXT.md
 FIGHTIQ_DATA_ARCHITECTURE.md
@@ -282,15 +291,19 @@ FIGHTIQ_ADMIN_IDENTITY_REVIEW.md
 FIGHTIQ_CHANGELOG.md
 ```
 
-`sync_fighters.py` traite uniquement l’identité, les informations générales et les statistiques globales. `enrich_rankings_cito.py` reste séparé. Les anciens scripts d’import, d’enrichissement, de consolidation et d’audit ne doivent être supprimés qu’après un dry-run puis un run réel réussis du remplaçant.
+`sync_fighters.py` traite uniquement l’identité, les informations générales et
+les statistiques globales. `enrich_rankings_cito.py` reste séparé. Les anciens
+scripts d’import, d’enrichissement, de consolidation et d’audit sont désormais
+supprimés ; leur historique reste récupérable dans Git.
 
 Le synchroniseur doit préserver les `fightiq_id` et associations déjà enregistrés et n’écrire que les nouveautés/différences. Une identité ordinaire ne pouvant pas être classée avec certitude passe en statut `quarantined` sans entrer dans `fighters`. Un conflit entre identifiants canoniques reste bloquant. Une collision de nom ne suffit jamais à fusionner deux personnes.
 
-Le registre V5.6 reste immuable. La future application enregistre les nouvelles
-décisions dans les champs administrateur de `cito_unmatched_fighters` ; le
-synchroniseur les revalide avant de modifier l'identité canonique.
-`data/cito_identity_overrides.json`, chargé après V5.6 et prioritaire, reste le
-secours versionné.
+Le registre unique conserve les décisions V5.6 et les corrections validées,
+avec une seule décision finale par ID Cito. La future application enregistre les
+nouvelles décisions dans les champs administrateur de
+`cito_unmatched_fighters` ; le synchroniseur les revalide avant de modifier
+l'identité canonique. `data/fighter_identity_registry.json` reste le secours
+versionné pour une reconstruction complète.
 
 Le matching automatique à la demande compare maintenant l'historique Cito avec
 les snapshots UFCStats : ID de combat, adversaire, événement/date puis résultat.
@@ -767,15 +780,16 @@ Version ultérieure :
 
 ### Phase immédiate — fermer proprement le pipeline combattants
 
-1. installer `scripts/sync_fighters.py` et les deux workflows séparés ;
-2. appliquer la migration de revue administrateur dans Supabase ;
-3. lancer le workflow combattants en `dry_run = true` ;
-4. exiger `unresolved = 0`, aucune collision d’ID, des volumes cohérents avec la référence de 4 607 combattants et contrôler l'artefact des quarantaines ;
-5. lancer ensuite le run réel et vérifier la relecture finale de Supabase ;
-6. lancer séparément le workflow ranking en dry-run puis en réel ;
-7. supprimer les anciens scripts et workflows remplacés, ainsi que les restes Wikidata ;
-8. considérer le socle combattants V1 stable sans attendre 100 % de complétude des profils historiques ;
-9. commencer l’application et développer les autres domaines dans des pipelines séparés.
+1. appliquer la migration de fusion V5.8 dans Supabase ;
+2. lancer le workflow combattants en `dry_run = true` ;
+3. exiger `unresolved = 0`, `fighter_merges = 12`,
+   `fighters_total = 4595` et `cito_only = 7` ;
+4. lancer ensuite le run réel et vérifier la relecture finale de Supabase ;
+5. lancer séparément le workflow ranking en dry-run puis en réel ;
+6. considérer le socle combattants V1 stable sans attendre 100 % de complétude
+   des profils historiques ;
+7. commencer l’application et développer les autres domaines dans des
+   pipelines séparés.
 
 ### V1 — Fondation UFC utilisable
 
@@ -885,23 +899,27 @@ Pour éviter toute confusion lors d’une future reprise :
 
 ## 23. Prochaine action exacte
 
-Au 17 août 2026 :
+Au 18 août 2026, le dépôt est nettoyé autour de l'ossature définitive. La
+prochaine action ne consiste plus à réorganiser les scripts mais à appliquer et
+valider la fusion des anciennes fiches Cito dupliquées :
 
-1. déposer le paquet unifié dans le dépôt : il remplace toute la partie
-   combattants généraux par le seul couple `sync_fighters.py` /
-   `update-fighters.yml`, sans supprimer immédiatement l’ancien code ;
-2. appliquer `supabase/migrations/202608170001_fighter_identity_admin_review.sql` ;
-3. exécuter **Sync FightIQ canonical fighter database** avec `dry_run = true` ;
-4. vérifier `unresolved = 0`, les volumes et l'artefact administrateur des quarantaines ;
-5. si et seulement si le plan est sain, relancer avec `dry_run = false` ;
-6. vérifier le rapport final relu depuis Supabase ;
-7. exécuter **Sync FightIQ UFC rankings** avec `dry_run = true`, puis avec `dry_run = false` si le plan est cohérent ;
-8. supprimer les anciens scripts/workflows combattants remplacés et les restes
-   Wikidata ; conserver uniquement le pipeline ranking séparé ;
-9. choisir le stack front-end et commencer le squelette de l’application ;
-10. développer d’abord accueil/navigation, recherche/autocomplete, listing et fiche combattant avec statistiques globales, puis l'écran admin ;
-11. créer ensuite le pipeline séparé événements → combats → rounds, puis les couches presse/contexte et utilisateurs/pronostics ;
-12. maintenir ce fichier après chaque étape importante.
+1. appliquer
+   `supabase/migrations/202608180001_merge_fighter_identities.sql` dans
+   Supabase sous le nom **V5.8 - Canonical fighter merges** ;
+2. exécuter **Sync FightIQ canonical fighter database** avec
+   `dry_run = true` ;
+3. contrôler `unresolved = 0`, `fighter_merges = 12`,
+   `fighters_total = 4595` et `cito_only = 7` ;
+4. examiner toute quarantaine éventuellement apparue depuis le run précédent ;
+5. relancer avec `dry_run = false` seulement si ce plan est cohérent ;
+6. vérifier le rapport final relu directement depuis Supabase ;
+7. contrôler ensuite le ranking dans son workflow séparé ;
+8. commencer le squelette de l'application ;
+9. développer accueil/navigation, recherche avec autocomplétion, listing et
+   fiche combattant avec statistiques globales, puis l'écran administrateur ;
+10. créer ensuite le pipeline événements → combats → rounds, puis les couches
+    presse/contexte et utilisateurs/pronostics ;
+11. maintenir ce fichier après chaque étape importante.
 
 ## 24. Sécurité et secrets
 
@@ -928,7 +946,7 @@ Au 17 août 2026 :
 - ajout d'une quarantaine non bloquante conservant les nouveaux profils ambigus hors de `fighters` ;
 - maintien du ranking dans son script et son workflow indépendants, avec planification avant écriture et suppression de la remise à zéro globale initiale ;
 - ajout de `FIGHTIQ_DATA_ARCHITECTURE.md` et `FIGHTIQ_CHANGELOG.md` afin de sauvegarder les règles techniques et le travail réalisé ;
-- ajout de `data/cito_identity_overrides.json` pour les futures décisions sans modifier l'historique V5.6 ;
+- conservation versionnée des décisions d'identité validées ;
 - ajout du matching d'alias par historique Cito/UFCStats, avec contrôle des
   adversaires, événements, dates et résultats ;
 - renforcement de ce matching : noms complets/inversés, surnoms et alias servent
@@ -946,3 +964,23 @@ Au 17 août 2026 :
   toujours revalidées par le synchroniseur ;
 - séparation explicite des futurs domaines événements/cartes, combats/rounds, presse/contexte et utilisateurs/pronostics ;
 - confirmation que la prochaine grande phase produit, après validation et nettoyage du pipeline, est la construction de l’application FightIQ.
+
+### 18 août 2026
+
+- vérification du registre V5.6 et explication des 19 fiches Cito-only ;
+- identification de 12 fiches canoniques dupliquées correspondant en réalité à
+  des combattants UFCStats existants ;
+- confirmation de 7 fiches Cito-only légitimes avec activité MMA documentée
+  mais sans combat officiel présent dans UFCStats ;
+- ajout de 14 overrides prioritaires : 13 identités Cito rattachées aux 12
+  doublons et la correspondance Kerry Kasik / Kerry Vera sécurisée pour une
+  reconstruction future ;
+- cible canonique après fusion : 4 595 combattants et 7 Cito-only ;
+- ajout d'une fusion atomique par lot, sans redirection permanente, et d'un
+  refus absolu de fusionner deux identités UFCStats ;
+- suppression des six scripts ponctuels, des deux anciens workflows et du
+  workflow temporaire d'installation désormais remplacés ;
+- consolidation des deux anciens JSON dans
+  `data/fighter_identity_registry.json` ;
+- maintien du pipeline ranking séparé et des migrations Supabase nécessaires
+  à la reproductibilité.

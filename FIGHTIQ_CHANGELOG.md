@@ -1,6 +1,6 @@
 # FightIQ — journal technique
 
-## 17 août 2026 — sauvegarde consolidée du pipeline fighters
+## 18 août 2026 — registre unique et fusion canonique
 
 ### État de référence préservé
 
@@ -9,9 +9,10 @@
 - 1 406 UFCStats seuls ;
 - 19 Cito seuls ;
 - consolidation V5.6 validée avec `unresolved = 0` ;
-- registre V5.6 sauvegardé : 133 liens, 20 créations/21 profils et 26 exclusions.
-- ajout d'un registre `cito_identity_overrides.json` séparé afin de conserver
-  V5.6 immuable tout en résolvant les futures quarantaines ;
+- décisions V5.6 et corrections ultérieures regroupées dans
+  `data/fighter_identity_registry.json` ;
+- registre final : 154 liens, 7 créations Cito-only légitimes et 26 exclusions,
+  sans ID Cito présent dans deux catégories ;
 
 ### Synchronisation des combattants
 
@@ -115,3 +116,39 @@ base existante, mais elles ne sont pas encore regroupées dans une transaction
 SQL unique couvrant `fighters`, `fighter_source_ids` et le registre de
 résolution. Une interruption en milieu d'écriture peut laisser un état partiel
 que le run suivant doit compléter.
+
+## 18 août 2026 — correction des doublons V5.6 et nettoyage définitif
+
+### Révision des 19 Cito-only
+
+- 12 anciennes fiches Cito-only reconnues comme doublons d'identités UFCStats ;
+- 13 IDs Cito déplacés vers ces 12 identités canoniques, dont deux
+  translittérations pour Jinensibieke Asikeerbai ;
+- Kerry Kasik / Kerry Vera convertie en lien explicite pour sécuriser une
+  reconstruction complète ;
+- 7 Cito-only conservés comme vrais combattants MMA sans combat UFCStats ;
+- cible après fusion : 4 595 combattants, dont 7 Cito-only.
+
+### Fusion canonique sûre
+
+- les liens vérifiés du registre d'overrides sont désormais prioritaires même
+  lorsqu'un ID Cito pointe déjà vers une ancienne fiche Cito-only ;
+- tous les alias Cito et toutes les résolutions de l'ancienne fiche sont
+  transférés vers le `fightiq_id` canonique ;
+- une fiche possédant un ID ou une source UFCStats ne peut jamais être supprimée
+  par ce mécanisme ;
+- ajout de `merge_fighter_identities(jsonb)` pour exécuter tout le lot dans
+  une transaction PostgreSQL unique ;
+- transfert fill-null-only des données et des références avant suppression de
+  l'ancienne fiche ;
+- aucune redirection permanente : un combattant ne conserve qu'un seul
+  `fightiq_id`.
+
+### Dépôt nettoyé
+
+- suppression des six scripts remplacés par `sync_fighters.py` ;
+- suppression des deux anciens workflows combattants ;
+- suppression du workflow temporaire d'installation et de `START_HERE.txt` ;
+- remplacement des deux anciens JSON par le registre Fighters unique ;
+- conservation des migrations, des tests et des documents de continuité ;
+- 46 tests Python, compilation des deux scripts et validation JSON réussis.

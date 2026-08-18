@@ -121,6 +121,13 @@ identité fiable déjà enregistrée. Les unités saisies sont métriques.
 6. Si la cible manque ou si les IDs se contredisent, la décision devient
    `rejected` avec une raison visible ; aucune identité canonique n'est altérée.
 
+Si une action `link` vise un combattant différent de la fiche Cito-only déjà
+créée, le synchroniseur peut planifier une fusion canonique. Elle n'est
+autorisée que si la fiche source ne possède aucune identité UFCStats. Le lot est
+appliqué par `merge_fighter_identities`. Toutes les données et références sont
+transférées avant la suppression de l'ancien `fightiq_id` ; aucune redirection
+permanente n'est créée.
+
 L'interface ne doit jamais écrire directement dans `fighters` ni dans
 `fighter_source_ids`. Elle enregistre une décision ; le synchroniseur reste le
 seul composant qui modifie l'identité canonique.
@@ -140,7 +147,10 @@ Appliquer avant le nouveau script :
 
 ```text
 supabase/migrations/202608170001_fighter_identity_admin_review.sql
+supabase/migrations/202608180001_merge_fighter_identities.sql
 ```
 
-Cette migration ajoute les champs de revue à `cito_unmatched_fighters`, la vue
-administrateur, les contraintes, l'index et les règles RLS.
+La première migration ajoute les champs de revue à
+`cito_unmatched_fighters`, la vue administrateur, les contraintes, l'index et
+les règles RLS. La seconde fournit la fusion atomique des identités vers
+l'unique `fightiq_id` canonique.

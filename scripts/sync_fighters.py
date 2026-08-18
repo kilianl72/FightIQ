@@ -65,10 +65,7 @@ UFC_EVENT_DETAILS_URL = (
 )
 CITO_FIGHTERS_URL = "https://api.citoapi.com/api/v1/ufc/fighters?page=1&limit=5000"
 CITO_FIGHT_HISTORY_URL = "https://api.citoapi.com/api/v1/ufc/fighters/{slug}/fights"
-DEFAULT_RESOLUTION_FILES = (
-    "data/cito_identity_resolution_v5_6.json,"
-    "data/cito_identity_overrides.json"
-)
+DEFAULT_IDENTITY_REGISTRY = "data/fighter_identity_registry.json"
 PAGE_SIZE = 1000
 
 FIGHTER_FIELDS = (
@@ -1289,45 +1286,46 @@ class ResolutionRegistry:
     exclusions: dict[str, dict[str, Any]] = field(default_factory=dict)
 
 
-def load_resolution_registry(paths: str | None) -> ResolutionRegistry:
+def load_resolution_registry(path: str | None) -> ResolutionRegistry:
+    """Charge l'unique registre versionné des décisions d'identité.
+
+    Le registre est obligatoire : continuer sans lui pourrait recréer un profil
+    exclu ou oublier une association déjà validée. Chaque Cito ID doit avoir une
+    seule décision finale parmi ``links``, ``creates`` et ``exclusions``.
+    """
     registry = ResolutionRegistry()
-    if not paths:
-        return registry
+    if not path:
+        raise RuntimeError("Fighter identity registry path is required")
 
-    def clear_previous(cito_id: str) -> None:
-        registry.links.pop(cito_id, None)
-        registry.creates.pop(cito_id, None)
-        registry.exclusions.pop(cito_id, None)
+    file_path = Path(path)
+    if not file_path.exists():
+        raise FileNotFoundError(f"Fighter identity registry absent: {file_path}")
+    payload = json.loads(file_path.read_text(encoding="utf-8"))
+    seen: dict[str, str] = {}
 
-    for raw_path in str(paths).split(","):
-        file_path = Path(raw_path.strip())
-        if not raw_path.strip():
-            continue
-        if not file_path.exists():
-            print(
-                f"Resolution registry absent: {file_path}; "
-                "continuing with other registries and DB mappings"
+    def reserve(cito_id: Any, decision: str) -> str:
+        normalized = str(cito_id or "").strip()
+        if not normalized:
+            raise RuntimeError(f"Missing cito_id in registry {decision}")
+        if normalized in seen:
+            raise RuntimeError(
+                "Duplicate Cito identity decision in registry: "
+                f"{normalized} ({seen[normalized]} and {decision})"
             )
-            continue
-        payload = json.loads(file_path.read_text(encoding="utf-8"))
-        for item in payload.get("links") or []:
-            if item.get("cito_id"):
-                cito_id = str(item["cito_id"])
-                clear_previous(cito_id)
-                registry.links[cito_id] = item
-        for item in payload.get("creates") or []:
-            for cito_id in item.get("cito_ids") or [
-                item.get("canonical_cito_id")
-            ]:
-                if cito_id:
-                    cito_id = str(cito_id)
-                    clear_previous(cito_id)
-                    registry.creates[cito_id] = item
-        for item in payload.get("exclusions") or []:
-            if item.get("cito_id"):
-                cito_id = str(item["cito_id"])
-                clear_previous(cito_id)
-                registry.exclusions[cito_id] = item
+        seen[normalized] = decision
+        return normalized
+
+    for item in payload.get("links") or []:
+        cito_id = reserve(item.get("cito_id"), "link")
+        registry.links[cito_id] = item
+    for item in payload.get("creates") or []:
+        cito_ids = item.get("cito_ids") or [item.get("canonical_cito_id")]
+        for raw_cito_id in cito_ids:
+            cito_id = reserve(raw_cito_id, "create")
+            registry.creates[cito_id] = item
+    for item in payload.get("exclusions") or []:
+        cito_id = reserve(item.get("cito_id"), "exclusion")
+        registry.exclusions[cito_id] = item
     return registry
 
 
@@ -1340,6 +1338,7 @@ class PlannedState:
     original_sources: dict[tuple[str, str], dict[str, Any]]
     original_resolutions: dict[str, dict[str, Any]]
     now: str
+    fighter_merges: dict[str, str] = field(default_factory=dict)
 
     @classmethod
     def from_rows(
@@ -1436,6 +1435,89 @@ class PlannedState:
             if unchanged:
                 return
         self.sources[key] = desired
+
+    def merge_cito_only_fighter(
+        self,
+        duplicate: dict[str, Any],
+        canonical: dict[str, Any],
+        preferred_cito_id: str | None = None,
+    ) -> None:
+        """Fusionne explicitement une ancienne fiche Cito-only dupliquée.
+
+        Cette opération n'est autorisée que lorsqu'un registre vérifié désigne
+        le combattant canonique. Une identité possédant déjà une source
+        UFCStats ne peut jamais être supprimée par ce mécanisme.
+        """
+        duplicate_id = str(duplicate.get("fightiq_id") or "")
+        canonical_id = str(canonical.get("fightiq_id") or "")
+        if not duplicate_id or not canonical_id or duplicate_id == canonical_id:
+            return
+        if duplicate_id not in self.original_fighters:
+            raise RuntimeError(
+                f"Unsafe fighter merge: {duplicate_id} is not an existing database row"
+            )
+        has_ufcstats_source = any(
+            row.get("fightiq_id") == duplicate_id
+            and row.get("source") == "ufcstats"
+            for row in self.sources.values()
+        )
+        if duplicate.get("ufcstats_id") or has_ufcstats_source:
+            raise RuntimeError(
+                "Unsafe fighter merge: curated Cito link would remove an "
+                f"UFCStats identity ({duplicate_id} -> {canonical_id})"
+            )
+
+        moved_cito_ids = [
+            source_id
+            for (source, source_id), row in self.sources.items()
+            if source == "cito" and row.get("fightiq_id") == duplicate_id
+        ]
+        preferred_cito_id = normalize_id(preferred_cito_id)
+        if preferred_cito_id not in moved_cito_ids:
+            preferred_cito_id = normalize_id(duplicate.get("cito_id"))
+        if preferred_cito_id not in moved_cito_ids:
+            preferred_cito_id = moved_cito_ids[0] if moved_cito_ids else None
+
+        # Préserve les informations de l'ancienne fiche uniquement lorsque la
+        # fiche canonique n'en possède pas déjà. UFCStats reste prioritaire.
+        protected = {
+            "id",
+            "fightiq_id",
+            "ufcstats_id",
+            "ufc_profile_url",
+            "source_updated_at",
+        }
+        for key, value in duplicate.items():
+            if key in protected or not present(value) or present(canonical.get(key)):
+                continue
+            canonical[key] = deepcopy(value)
+
+        if not canonical.get("cito_id") and preferred_cito_id:
+            canonical["cito_id"] = preferred_cito_id
+        canonical["fightiq_updated_at"] = self.now
+
+        for key, row in list(self.sources.items()):
+            if row.get("fightiq_id") != duplicate_id:
+                continue
+            moved = deepcopy(row)
+            moved["fightiq_id"] = canonical_id
+            moved["updated_at"] = self.now
+            if moved.get("source") == "cito":
+                moved["is_primary"] = (
+                    str(moved.get("source_id")) == str(canonical.get("cito_id"))
+                )
+            self.sources[key] = moved
+
+        for resolution in self.resolutions.values():
+            if resolution.get("matched_fightiq_id") == duplicate_id:
+                resolution["matched_fightiq_id"] = canonical_id
+                resolution["matched_ufcstats_id"] = canonical.get("ufcstats_id")
+                resolution["resolved_at"] = self.now
+            if resolution.get("target_fightiq_id") == duplicate_id:
+                resolution["target_fightiq_id"] = canonical_id
+
+        self.fighters.pop(duplicate_id, None)
+        self.fighter_merges[duplicate_id] = canonical_id
 
     def set_resolution(self, row: dict[str, Any]) -> None:
         cito_id = str(row["cito_id"])
@@ -2526,16 +2608,49 @@ def plan_cito_profiles(
         reported_ufcstats = normalize_id(profile.get("ufcStatsId"))
         mapped = state.find_by_cito(cito_id)
         direct = state.find_by_ufcstats(reported_ufcstats)
+        curated_link = registry.links.get(cito_id)
 
-        if mapped and direct and mapped["fightiq_id"] != direct["fightiq_id"]:
-            raise RuntimeError(
-                "Source identity conflict for Cito "
-                f"{cito_id}: existing mapping={mapped['fightiq_id']}, "
-                f"reported UFCStats mapping={direct['fightiq_id']}"
-            )
-
-        fighter = mapped or direct
-        reason = "existing_cito_mapping" if mapped else "exact_ufcstats_id"
+        if curated_link:
+            curated_ufcstats = normalize_id(curated_link.get("ufcstats_id"))
+            curated_target = state.find_by_ufcstats(curated_ufcstats)
+            if not curated_target:
+                quarantine_report.append(
+                    quarantine_profile(
+                        state,
+                        profile,
+                        "curated_ufcstats_target_missing",
+                        identity_fingerprint,
+                        [
+                            {
+                                "expected_ufcstats_id": curated_ufcstats,
+                                "resolution_reason": curated_link.get(
+                                    "resolution_reason"
+                                ),
+                            }
+                        ],
+                    )
+                )
+                continue
+            if mapped and mapped["fightiq_id"] != curated_target["fightiq_id"]:
+                state.merge_cito_only_fighter(
+                    mapped,
+                    curated_target,
+                    preferred_cito_id=cito_id,
+                )
+            fighter = curated_target
+            # Un override vérifié est prioritaire sur un éventuel ID UFCStats
+            # Cito ancien ou rattaché à un homonyme.
+            reported_ufcstats = curated_ufcstats
+            reason = curated_link.get("resolution_reason") or "curated_link"
+        else:
+            if mapped and direct and mapped["fightiq_id"] != direct["fightiq_id"]:
+                raise RuntimeError(
+                    "Source identity conflict for Cito "
+                    f"{cito_id}: existing mapping={mapped['fightiq_id']}, "
+                    f"reported UFCStats mapping={direct['fightiq_id']}"
+                )
+            fighter = mapped or direct
+            reason = "existing_cito_mapping" if mapped else "exact_ufcstats_id"
 
         resolution = state.resolutions.get(cito_id)
         admin_applied = False
@@ -2611,27 +2726,6 @@ def plan_cito_profiles(
             }:
                 fighter = candidate
                 reason = "existing_resolution_record"
-
-        if not fighter and cito_id in registry.links:
-            item = registry.links[cito_id]
-            fighter = state.find_by_ufcstats(normalize_id(item.get("ufcstats_id")))
-            if not fighter:
-                quarantine_report.append(
-                    quarantine_profile(
-                        state,
-                        profile,
-                        "curated_ufcstats_target_missing",
-                        identity_fingerprint,
-                        [
-                            {
-                                "expected_ufcstats_id": item.get("ufcstats_id"),
-                                "resolution_reason": item.get("resolution_reason"),
-                            }
-                        ],
-                    )
-                )
-                continue
-            reason = item.get("resolution_reason") or "curated_link"
 
         if not fighter and cito_id in registry.creates:
             fighter = process_create_override(
@@ -2827,6 +2921,14 @@ def plan_cito_profiles(
                     }
                 )
                 continue
+            mapped = state.find_by_cito(cito_id)
+            if mapped and mapped.get("fightiq_id") != fighter.get("fightiq_id"):
+                state.merge_cito_only_fighter(
+                    mapped,
+                    fighter,
+                    preferred_cito_id=cito_id,
+                )
+                resolution = state.resolutions.get(cito_id) or resolution
             primary_profile = not bool(fighter.get("cito_id"))
             state.ensure_source(
                 fighter,
@@ -3083,6 +3185,7 @@ def apply_plan(sb: Any, state: PlannedState, dry_run: bool) -> dict[str, int]:
     summary = {
         "fighter_inserts": len(fighter_inserts),
         "fighter_updates": len(fighter_updates),
+        "fighter_merges": len(state.fighter_merges),
         "source_upserts": len(source_inserts) + len(source_updates),
         "resolution_upserts": len(resolution_inserts) + len(resolution_updates),
     }
@@ -3100,6 +3203,23 @@ def apply_plan(sb: Any, state: PlannedState, dry_run: bool) -> dict[str, int]:
                         "cito_id": row.get("cito_id"),
                     }
                     for row in fighter_inserts
+                ],
+                ensure_ascii=False,
+                indent=2,
+            )
+        )
+    if state.fighter_merges:
+        print("===== PLANNED CANONICAL FIGHTER MERGES =====")
+        print(
+            json.dumps(
+                [
+                    {
+                        "duplicate_fightiq_id": source_id,
+                        "canonical_fightiq_id": target_id,
+                    }
+                    for source_id, target_id in sorted(
+                        state.fighter_merges.items()
+                    )
                 ],
                 ensure_ascii=False,
                 indent=2,
@@ -3134,6 +3254,23 @@ def apply_plan(sb: Any, state: PlannedState, dry_run: bool) -> dict[str, int]:
         sb.table("fighters").insert(
             {key: value for key, value in record.items() if key != "id"}
         ).execute()
+
+    if state.fighter_merges:
+        merge_rows = [
+            {
+                "source_fightiq_id": source_id,
+                "target_fightiq_id": target_id,
+                "reason": "curated_cito_identity_override",
+            }
+            for source_id, target_id in sorted(state.fighter_merges.items())
+        ]
+        # Une seule fonction SQL fusionne tout le lot dans une transaction. Si
+        # une fusion est invalide, aucune suppression du lot n'est conservée.
+        sb.rpc(
+            "merge_fighter_identities",
+            {"p_merges": merge_rows},
+        ).execute()
+
     for fightiq_id, patch in fighter_updates:
         sb.table("fighters").update(patch).eq("fightiq_id", fightiq_id).execute()
 
@@ -3168,10 +3305,10 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "--resolution-file",
         default=os.environ.get(
-            "CITO_RESOLUTION_FILES",
-            os.environ.get("CITO_RESOLUTION_FILE", DEFAULT_RESOLUTION_FILES),
+            "FIGHTER_IDENTITY_REGISTRY",
+            DEFAULT_IDENTITY_REGISTRY,
         ),
-        help="registres JSON séparés par une virgule, le dernier est prioritaire",
+        help="registre JSON canonique unique des décisions d'identité",
     )
     parser.add_argument(
         "--report-file",
@@ -3262,14 +3399,15 @@ def main(argv: list[str] | None = None) -> int:
         )
         print("Quarantined profiles stay outside fighters; safe updates continue")
 
-    planned_report = validate_state(state, minimum_fighters)
+    validation_floor = minimum_fighters - len(state.fighter_merges)
+    planned_report = validate_state(state, validation_floor)
     print("===== PLANNED CANONICAL STATE =====")
     print(json.dumps(planned_report, ensure_ascii=False, indent=2))
     apply_plan(sb, state, args.dry_run)
 
     if not args.dry_run:
         final_state = load_database_state(sb, utc_now())
-        final_report = validate_state(final_state, minimum_fighters)
+        final_report = validate_state(final_state, validation_floor)
         print("===== FINAL DATABASE STATE =====")
         print(json.dumps(final_report, ensure_ascii=False, indent=2))
     print("FIGHTIQ UNIFIED FIGHTER SYNC COMPLETE")

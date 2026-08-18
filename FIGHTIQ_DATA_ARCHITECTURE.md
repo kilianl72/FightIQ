@@ -207,8 +207,9 @@ La quarantaine conserve :
 Une quarantaine n'est réévaluée automatiquement que si le profil Cito ou
 l'index des identités/historiques FightIQ/UFCStats a changé. La future
 application écrit ses décisions dans les colonnes de revue de cette table.
-`data/cito_identity_overrides.json` reste un secours versionné. Le registre V5.6
-reste immuable ; le fichier d'overrides est chargé après lui et a priorité.
+`data/fighter_identity_registry.json` est le secours versionné unique. Il
+consolide le registre V5.6 et les corrections ultérieures avec une seule
+décision finale par ID Cito.
 
 Champs de revue ajoutés par la migration :
 
@@ -348,3 +349,24 @@ temporairement dans une source.
 
 Les événements, combats, rounds, articles et prédictions devront toujours
 référencer le `fightiq_id` canonique.
+
+## 11. Fusion d'une ancienne identité dupliquée
+
+Une décision vérifiée peut révéler qu'une fiche Cito-only déjà créée correspond
+à une identité UFCStats existante. Dans ce cas :
+
+1. le registre prioritaire désigne explicitement l'ID UFCStats cible ;
+2. le synchroniseur vérifie que la fiche à retirer ne possède aucune identité
+   UFCStats ;
+3. les alias `fighter_source_ids` et les résolutions Cito sont déplacés vers
+   le `fightiq_id` canonique ;
+4. les champs absents de la fiche canonique sont préservés depuis la fiche
+   Cito-only ;
+5. la fonction Supabase `merge_fighter_identities` exécute le lot dans une
+   transaction unique ;
+6. l'ancien identifiant est supprimé seulement après le transfert et les
+   contrôles ; aucune redirection permanente n'est conservée.
+
+La fonction réaffecte aussi les clés étrangères simples des futures tables qui
+référencent `fighters.fightiq_id`. Une collision ou la présence de deux
+identités UFCStats annule entièrement le lot.

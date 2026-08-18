@@ -204,3 +204,4 @@ grant update (
     manual_profile,
     admin_notes
 ) on public.cito_unmatched_fighters to authenticated;
+

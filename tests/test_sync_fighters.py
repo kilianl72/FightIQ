@@ -76,12 +76,11 @@ class NormalizationTests(unittest.TestCase):
 
 
 class IdentityTests(unittest.TestCase):
-    def test_later_override_registry_has_priority(self):
+    def test_registry_rejects_two_decisions_for_the_same_cito_id(self):
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)
-            historical = root / "historical.json"
-            overrides = root / "overrides.json"
-            historical.write_text(
+            registry_file = root / "registry.json"
+            registry_file.write_text(
                 json.dumps(
                     {
                         "links": [
@@ -89,13 +88,7 @@ class IdentityTests(unittest.TestCase):
                                 "cito_id": "cito-1",
                                 "ufcstats_id": "ufc-1",
                             }
-                        ]
-                    }
-                )
-            )
-            overrides.write_text(
-                json.dumps(
-                    {
+                        ],
                         "exclusions": [
                             {
                                 "cito_id": "cito-1",
@@ -105,11 +98,122 @@ class IdentityTests(unittest.TestCase):
                     }
                 )
             )
-            registry = sync.load_resolution_registry(
-                f"{historical},{overrides}"
+            with self.assertRaisesRegex(RuntimeError, "Duplicate Cito"):
+                sync.load_resolution_registry(str(registry_file))
+
+    def test_current_registry_reclassifies_all_verified_v5_6_duplicates(self):
+        root = Path(__file__).parents[1]
+        registry = sync.load_resolution_registry(
+            str(root / "data/fighter_identity_registry.json")
+        )
+        corrected_ids = {
+            "4c1942f6-2617-4abb-9790-172800afae3b",
+            "d680fb0b-258b-4a5b-aacb-53176e51956b",
+            "d6fcc83b-e7f6-4d0e-836e-166963e43367",
+            "ac4dbdfb-1c10-4417-8943-5587295a48b0",
+            "63914101-8507-4477-9f6e-765834cd77e8",
+            "b3a09881-bdbb-4858-853b-092d726e227f",
+            "6c86361a-cf66-4e2a-8b46-6b9796e90ac4",
+            "7a996cfa-9ef9-4593-ad5b-a9730afdf4a5",
+            "a41fb40f-a396-4962-8f71-ea0cf257c326",
+            "12718617-c577-4f89-8471-4412cc72a14e",
+            "319bb1ff-6efe-4d69-bef2-30ea3d8222c3",
+            "589ac933-c2bc-4a00-9a08-3758d7308b74",
+            "36ac0e4d-b896-43aa-aa5f-a7be0707b94c",
+            "e291f519-87f0-486f-b4f6-bf047b0b23a7",
+        }
+        self.assertTrue(corrected_ids <= set(registry.links))
+        self.assertFalse(corrected_ids & set(registry.creates))
+        self.assertEqual(len(registry.creates), 7)
+
+    def test_current_overrides_plan_exactly_twelve_legacy_fighter_merges(self):
+        root = Path(__file__).parents[1]
+        registry_payload = json.loads(
+            (root / "data/fighter_identity_registry.json").read_text()
+        )
+        registry = sync.load_resolution_registry(
+            str(root / "data/fighter_identity_registry.json")
+        )
+        merge_links = [
+            link
+            for link in registry_payload["links"]
+            if (link.get("evidence") or {}).get(
+                "legacy_v5_6_created_in_error"
             )
-        self.assertNotIn("cito-1", registry.links)
-        self.assertIn("cito-1", registry.exclusions)
+        ]
+        self.assertEqual(len(merge_links), 12)
+        fighters = []
+        sources = []
+        resolutions = []
+        profiles = []
+        for link in merge_links:
+            canonical_cito_id = link["cito_id"]
+            aliases = [
+                candidate
+                for candidate in registry_payload["links"]
+                if candidate["cito_id"] == canonical_cito_id
+                or (candidate.get("evidence") or {}).get(
+                    "canonical_cito_id"
+                )
+                == canonical_cito_id
+            ]
+            target_ufcstats = link["ufcstats_id"]
+            target_fightiq = f"fiq_{target_ufcstats}"
+            duplicate_fightiq = "fiq_cito_" + canonical_cito_id.replace("-", "")
+            fighters.extend(
+                [
+                    {
+                        "fightiq_id": target_fightiq,
+                        "display_name": link["ufcstats_name"],
+                        "ufcstats_id": target_ufcstats,
+                        "cito_id": None,
+                    },
+                    {
+                        "fightiq_id": duplicate_fightiq,
+                        "display_name": link["cito_name"],
+                        "ufcstats_id": None,
+                        "cito_id": canonical_cito_id,
+                    },
+                ]
+            )
+            sources.append(
+                {
+                    "fightiq_id": target_fightiq,
+                    "source": "ufcstats",
+                    "source_id": target_ufcstats,
+                    "is_primary": True,
+                }
+            )
+            for alias in aliases:
+                cito_id = alias["cito_id"]
+                sources.append(
+                    {
+                        "fightiq_id": duplicate_fightiq,
+                        "source": "cito",
+                        "source_id": cito_id,
+                        "source_name": alias["cito_name"],
+                        "is_primary": cito_id == canonical_cito_id,
+                    }
+                )
+                resolutions.append(
+                    {
+                        "cito_id": cito_id,
+                        "name": alias["cito_name"],
+                        "resolution_status": "created_new_fighter",
+                        "matched_fightiq_id": duplicate_fightiq,
+                    }
+                )
+                profiles.append({"id": cito_id, "name": alias["cito_name"]})
+        state = make_state(fighters, sources, resolutions)
+        sync.plan_cito_profiles(state, profiles, registry)
+        self.assertEqual(len(state.fighter_merges), 12)
+        self.assertEqual(len(state.fighters), 12)
+        self.assertTrue(
+            all(
+                fighter.get("ufcstats_id") and fighter.get("cito_id")
+                for fighter in state.fighters.values()
+            )
+        )
 
     def test_backfills_missing_primary_source_mappings(self):
         state = make_state(
@@ -843,6 +947,204 @@ class IdentityTests(unittest.TestCase):
             "applied",
         )
 
+    def test_curated_link_merges_existing_cito_only_duplicate(self):
+        state = make_state(
+            [
+                {
+                    "fightiq_id": "fiq_target",
+                    "display_name": "Canonical Name",
+                    "ufcstats_id": "ufc-target",
+                    "cito_id": None,
+                },
+                {
+                    "fightiq_id": "fiq_cito_duplicate",
+                    "display_name": "Cito Alias",
+                    "ufcstats_id": None,
+                    "cito_id": "cito-alias",
+                    "cito_record_wins": 8,
+                },
+            ],
+            [
+                {
+                    "fightiq_id": "fiq_target",
+                    "source": "ufcstats",
+                    "source_id": "ufc-target",
+                    "source_name": "Canonical Name",
+                    "is_primary": True,
+                },
+                {
+                    "fightiq_id": "fiq_cito_duplicate",
+                    "source": "cito",
+                    "source_id": "cito-alias",
+                    "source_name": "Cito Alias",
+                    "is_primary": True,
+                },
+            ],
+            [
+                {
+                    "cito_id": "cito-alias",
+                    "name": "Cito Alias",
+                    "resolution_status": "created_new_fighter",
+                    "matched_fightiq_id": "fiq_cito_duplicate",
+                }
+            ],
+        )
+        registry = sync.ResolutionRegistry(
+            links={
+                "cito-alias": {
+                    "cito_id": "cito-alias",
+                    "cito_name": "Cito Alias",
+                    "ufcstats_id": "ufc-target",
+                    "resolution_reason": "verified_legacy_duplicate",
+                }
+            }
+        )
+        review = sync.plan_cito_profiles(
+            state,
+            [{"id": "cito-alias", "name": "Cito Alias"}],
+            registry,
+        )
+        self.assertEqual(review, [])
+        self.assertNotIn("fiq_cito_duplicate", state.fighters)
+        self.assertEqual(
+            state.fighter_merges,
+            {"fiq_cito_duplicate": "fiq_target"},
+        )
+        self.assertEqual(state.fighters["fiq_target"]["cito_id"], "cito-alias")
+        self.assertEqual(state.fighters["fiq_target"]["cito_record_wins"], 8)
+        self.assertEqual(
+            state.sources[("cito", "cito-alias")]["fightiq_id"],
+            "fiq_target",
+        )
+        self.assertEqual(
+            state.resolutions["cito-alias"]["matched_fightiq_id"],
+            "fiq_target",
+        )
+        report = sync.validate_state(state, minimum_fighters=1)
+        self.assertEqual(report["fighters_total"], 1)
+        self.assertEqual(report["ufcstats_cito"], 1)
+
+    def test_curated_link_moves_all_aliases_from_legacy_duplicate(self):
+        state = make_state(
+            [
+                {
+                    "fightiq_id": "fiq_target",
+                    "display_name": "Canonical",
+                    "ufcstats_id": "ufc-target",
+                    "cito_id": None,
+                },
+                {
+                    "fightiq_id": "fiq_duplicate",
+                    "display_name": "Legacy Alias",
+                    "ufcstats_id": None,
+                    "cito_id": "cito-primary",
+                },
+            ],
+            [
+                {
+                    "fightiq_id": "fiq_target",
+                    "source": "ufcstats",
+                    "source_id": "ufc-target",
+                    "source_name": "Canonical",
+                    "is_primary": True,
+                },
+                {
+                    "fightiq_id": "fiq_duplicate",
+                    "source": "cito",
+                    "source_id": "cito-primary",
+                    "source_name": "Legacy Alias",
+                    "is_primary": True,
+                },
+                {
+                    "fightiq_id": "fiq_duplicate",
+                    "source": "cito",
+                    "source_id": "cito-secondary",
+                    "source_name": "Other Transliteration",
+                    "is_primary": False,
+                },
+            ],
+            [
+                {
+                    "cito_id": "cito-secondary",
+                    "resolution_status": "created_new_fighter",
+                    "matched_fightiq_id": "fiq_duplicate",
+                }
+            ],
+        )
+        registry = sync.ResolutionRegistry(
+            links={
+                "cito-primary": {
+                    "cito_id": "cito-primary",
+                    "ufcstats_id": "ufc-target",
+                }
+            }
+        )
+        sync.plan_cito_profiles(
+            state,
+            [{"id": "cito-primary", "name": "Legacy Alias"}],
+            registry,
+        )
+        self.assertEqual(
+            state.sources[("cito", "cito-secondary")]["fightiq_id"],
+            "fiq_target",
+        )
+        self.assertFalse(
+            state.sources[("cito", "cito-secondary")]["is_primary"]
+        )
+        self.assertEqual(
+            state.resolutions["cito-secondary"]["matched_fightiq_id"],
+            "fiq_target",
+        )
+
+    def test_curated_link_never_merges_two_ufcstats_identities(self):
+        state = make_state(
+            [
+                {
+                    "fightiq_id": "fiq_target",
+                    "display_name": "Target",
+                    "ufcstats_id": "ufc-target",
+                    "cito_id": None,
+                },
+                {
+                    "fightiq_id": "fiq_other_ufc",
+                    "display_name": "Other UFC Fighter",
+                    "ufcstats_id": "ufc-other",
+                    "cito_id": "cito-profile",
+                },
+            ],
+            [
+                {
+                    "fightiq_id": "fiq_target",
+                    "source": "ufcstats",
+                    "source_id": "ufc-target",
+                },
+                {
+                    "fightiq_id": "fiq_other_ufc",
+                    "source": "ufcstats",
+                    "source_id": "ufc-other",
+                },
+                {
+                    "fightiq_id": "fiq_other_ufc",
+                    "source": "cito",
+                    "source_id": "cito-profile",
+                },
+            ],
+        )
+        registry = sync.ResolutionRegistry(
+            links={
+                "cito-profile": {
+                    "cito_id": "cito-profile",
+                    "ufcstats_id": "ufc-target",
+                }
+            }
+        )
+        with self.assertRaisesRegex(RuntimeError, "would remove an UFCStats identity"):
+            sync.plan_cito_profiles(
+                state,
+                [{"id": "cito-profile", "name": "Other UFC Fighter"}],
+                registry,
+            )
+
 
 class FightHistoryTests(unittest.TestCase):
     def test_normalizes_common_cito_fight_history_shape(self):
@@ -1017,6 +1319,29 @@ class ValidationTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(RuntimeError, "unresolved Cito rows"):
             sync.validate_state(state, minimum_fighters=1)
+
+
+class MigrationContractTests(unittest.TestCase):
+    def setUp(self):
+        migration = (
+            Path(__file__).parents[1]
+            / "supabase"
+            / "migrations"
+            / "202608180001_merge_fighter_identities.sql"
+        )
+        self.sql = migration.read_text(encoding="utf-8").lower()
+
+    def test_merge_is_one_batch_without_permanent_redirect_table(self):
+        self.assertIn(
+            "jsonb_array_elements(p_merges)",
+            self.sql,
+        )
+        self.assertNotIn("fighter_identity_redirects", self.sql)
+
+    def test_merge_preserves_values_and_releases_duplicate_cito_id(self):
+        self.assertIn("coalesce(target.%1$i, duplicate.%1$i)", self.sql)
+        self.assertIn("set cito_id = null", self.sql)
+        self.assertIn("get diagnostics deleted_count = row_count", self.sql)
 
 
 if __name__ == "__main__":

@@ -375,3 +375,4 @@ if __name__ == "__main__":
     except Exception as exc:
         print(f"FIGHTIQ RANKING SYNC FAILED: {exc}")
         raise
+
